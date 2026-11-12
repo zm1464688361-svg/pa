@@ -91,6 +91,15 @@ func TestDropLegacyNotifyIndex(t *testing.T) {
 		{"payment_records", "idx_payment_records_notify_id"},
 		{"abnormal_payments", "idx_abnormal_payments_channel_trade_no"},
 	}
+	// 两个兼容包装函数均需可直接覆盖
+	for i := 0; i < 2; i++ {
+		if err := dropLegacyNotifyIndex(db); err != nil {
+			t.Fatalf("第 %d 次清理通知旧索引失败: %v", i+1, err)
+		}
+		if err := dropLegacyAbnormalTradeIndex(db); err != nil {
+			t.Fatalf("第 %d 次清理台账旧索引失败: %v", i+1, err)
+		}
+	}
 	for _, lg := range legacy {
 		for i := 0; i < 2; i++ {
 			if err := dropIndexIfPresent(db, lg.table, lg.index); err != nil {
