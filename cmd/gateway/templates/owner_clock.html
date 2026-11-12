@@ -43,7 +43,7 @@
 {{$date := .Date}}
 {{range .Report.Records}}
 <tr>
-  <td>{{.CreatedAt}}</td><td>{{.OrderNo}}</td><td>{{.UserPet}}</td><td>{{.SlotRange}}</td>
+  <td>{{.Time}}</td><td>{{.OrderNo}}</td><td>{{.UserPet}}</td><td>{{.SlotRange}}</td>
   <td>{{.StatusText}}</td><td>{{.Detail}}</td><td>{{fen .AmountFen}}</td>
   <td>
     {{if eq .StatusText "已确认"}}<span class="muted">结束后可标记</span>{{end}}
