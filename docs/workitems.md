@@ -107,3 +107,20 @@ CI 失败修复过程（保留真实循环记录）：
 
 - 脚本：`scripts/e2e.ps1`；记录：`docs/verification.md`（16 个场景全部通过）
 - 覆盖：四角色登录、预扣名额、支付回调确认、≥2h 自助取消、退款释放名额与重复回调幂等、<2h 人工审核、审核期拦截核销、核销/开始/完成强制顺序与幂等、关单后支付入异常台账、异常退款不释放名额、未到店需时段结束后手动标记、店长日清报表与主人越权拦截
+
+## 整改提交清单（zhou 分支，2026-11-12 第二轮）
+
+| 提交 | 类型 | 内容 | 对应整改项 |
+|---|---|---|---|
+| `84a7da3` | fix | 移除端到端脚本内置数据库口令，改读 `MYSQL_PWD`/`config.local.yaml` | 禁止密钥入库（历史提交仍含旧口令，须轮换） |
+| `22b0aef` | test | 补 biz/repo 异常分支与并发用例 | 逐包覆盖率达标 |
+| `9398f93` | feat | 新增 `tools/covergate` 逐包门禁与 `cover-pkgs`/`cover-strict` 目标 | 覆盖率门禁只报整体 |
+| `434c228` | feat | CI 增加 main 自动部署、健康检查、业务冒烟与回退步骤，附 `scripts/smoke.sh`、`docs/deploy.md` | 自动发布与上线冒烟 |
+| `c91786f` | feat | 自编 Skill：`biz-consistency-check`、`acceptance-check`，附 `docs/skill-usage.md` | Skill 总结与调用记录 |
+| `ead6b4e` | docs | AI 使用说明、结构化事件清单、提示词导出说明 | 过程可追溯 |
+| `e24d35b` | docs | AGENTS.md 与本文档登记整改项与待办 | 约束同步 |
+| `4a4dccf` | opt | `.gitattributes` 统一 LF，消除 Windows 工作区 gofmt 误报 | 静态检查一致性 |
+
+本地复跑结果（提交后）：`go vet ./...` 退出码 0、`gofmt -l .` 无输出、`go test ./internal/... -p 1` 9 包全绿、`make cover` 整体 87.9% 且 biz 87.2%/repo 88.9%/paysim 85.0%/clock 87.5% 逐包达标。
+
+待办（未完成，不隐瞒）：`deploy` job 需合并到 main 后才会运行，运行结果与 `deploy-record` 制品尚未产生；讲解视频与当日群提交未完成；meegle 工作项核验仍缺凭证；`main` 分支保护受 GitHub 套餐限制（403）。
