@@ -30,8 +30,9 @@ fmt:
 test:
 	go test ./... -count=1
 
+# 覆盖率（统计口径：以 ./internal/... 全包为分母，与 CI 门禁一致；门禁 ≥85%）
 cover:
-	go test ./internal/... -count=1 -coverprofile=coverage/cover.out
+	go test ./internal/... -count=1 -coverpkg=./internal/... -coverprofile=coverage/cover.out
 	go tool cover -func=coverage/cover.out | tail -1
 
 race:
