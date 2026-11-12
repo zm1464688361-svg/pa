@@ -1,9 +1,26 @@
 ﻿# 端到端验收脚本：按题面场景走完四角色主流程，输出记录到 docs/verification.md
 # 前置：service(9001)/gateway(8081)/paysim(9002) 已启动；MySQL 可用；已有 seed 数据
+# 数据库口令不落库：优先读环境变量 MYSQL_USER / MYSQL_PWD（mysql 客户端自动识别 MYSQL_PWD），
+# 其次从 config.local.yaml 的 db_dsn 解析；两者都没有则直接报错退出，禁止在脚本里写死口令。
 $ErrorActionPreference = "Continue"
 $GW = "http://127.0.0.1:8081"
 $PS = "http://127.0.0.1:9002"
 $MYSQL = "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe"
+
+$MYSQL_USER = if ($env:MYSQL_USER) { $env:MYSQL_USER } else { "root" }
+if (-not $env:MYSQL_PWD) {
+    $cfg = Join-Path (Split-Path -Parent $PSScriptRoot) "config.local.yaml"
+    if (Test-Path $cfg) {
+        $line = (Select-String -Path $cfg -Pattern "^\s*db_dsn\s*:" | Select-Object -First 1).Line
+        if ($line -match "^\s*db_dsn\s*:\s*([^:@\s]+):([^@]*)@") {
+            $MYSQL_USER = $Matches[1]
+            $env:MYSQL_PWD = $Matches[2]
+        }
+    }
+}
+if (-not $env:MYSQL_PWD) {
+    throw "未提供数据库口令：请先设置环境变量 MYSQL_PWD（或 MYSQL_USER/MYSQL_PWD），或准备 config.local.yaml 的 db_dsn。脚本不再内置口令。"
+}
 
 $script:rows = @()
 function Step($name, $ok, $detail) {
@@ -11,7 +28,7 @@ function Step($name, $ok, $detail) {
     $script:rows += $r
     if ($ok) { Write-Host "OK   $name" } else { Write-Host "FAIL $name -> $detail" }
 }
-function SQL($q) { (& $MYSQL -uroot -pasdfghjkl petshop -N -B -e $q 2>$null) -join "`n" }
+function SQL($q) { (& $MYSQL "-u$MYSQL_USER" petshop -N -B -e $q 2>$null) -join "`n" }
 function Login($u) {
     $s = New-Object Microsoft.PowerShell.Commands.WebRequestSession
     Invoke-WebRequest -Uri "$GW/login" -Method Post -Body @{ username = $u } -WebSession $s -UseBasicParsing | Out-Null

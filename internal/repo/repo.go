@@ -52,12 +52,31 @@ func migrateSchema(db *gorm.DB) error {
 		return fmt.Errorf("获取迁移锁超时: %s", lockName)
 	}
 	defer db.Exec("SELECT RELEASE_LOCK(?)", lockName)
-	return db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&model.User{}, &model.Shop{}, &model.ServiceItem{}, &model.Pet{},
 		&model.TimeSlot{}, &model.Appointment{}, &model.PaymentRecord{},
 		&model.Refund{}, &model.CancelRequest{}, &model.AbnormalPayment{},
 		&model.AuditLog{}, &model.ClockOffset{},
-	)
+	); err != nil {
+		return err
+	}
+	return dropLegacyNotifyIndex(db)
+}
+
+// dropLegacyNotifyIndex 兼容旧库：幂等键已改为 (order_no, notify_id) 复合唯一，
+// 旧的全局 notify_id 唯一索引会让渠道重启后复用通知号的新支付写入失败，需移除。
+func dropLegacyNotifyIndex(db *gorm.DB) error {
+	var n int64
+	if err := db.Raw(
+		"SELECT COUNT(*) FROM information_schema.statistics "+
+			"WHERE table_schema = DATABASE() AND table_name = 'payment_records' AND index_name = ?",
+		"idx_payment_records_notify_id").Scan(&n).Error; err != nil {
+		return err
+	}
+	if n == 0 {
+		return nil
+	}
+	return db.Exec("ALTER TABLE payment_records DROP INDEX idx_payment_records_notify_id").Error
 }
 
 // WriteAudit 写审计日志，失败仅记日志不影响主流程。

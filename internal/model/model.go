@@ -137,11 +137,12 @@ type Appointment struct {
 	UpdatedAt    time.Time  `json:"updatedAt"`
 }
 
-// PaymentRecord 支付通知流水。NotifyID 唯一（渠道幂等键）。
+// PaymentRecord 支付通知流水。幂等键 = (订单号, 通知号)：
+// 渠道进程重启后通知号可能复用（如 N1-1），不能按全局 notify_id 唯一约束。
 type PaymentRecord struct {
 	ID             int64     `gorm:"primaryKey" json:"id"`
-	NotifyID       string    `gorm:"size:64;uniqueIndex" json:"notifyId"`
-	OrderNo        string    `gorm:"size:32;index" json:"orderNo"`
+	NotifyID       string    `gorm:"size:64;uniqueIndex:idx_payment_order_notify;index" json:"notifyId"`
+	OrderNo        string    `gorm:"size:32;uniqueIndex:idx_payment_order_notify;index" json:"orderNo"`
 	ChannelTradeNo string    `gorm:"size:64;index" json:"channelTradeNo"`
 	AmountFen      int64     `json:"amountFen"`
 	Result         string    `gorm:"size:16" json:"result"`
