@@ -1,0 +1,12 @@
+{{define "error.html"}}{{template "head" .}}
+<h1 class="page">出错了</h1>
+<div class="banner err">{{.Error}}</div>
+<a class="btn gray" href="javascript:history.back()">返回</a>
+{{template "foot" .}}{{end}}
+
+{{define "slots_result.html"}}{{template "head" .}}
+<h1 class="page">{{if .Ok}}操作结果{{else}}操作未完成{{end}}</h1>
+<div class="banner {{if .Ok}}ok{{else}}err{{end}}">{{.Msg}}</div>
+{{if .Detail}}<div class="notice">{{.Detail}}</div>{{end}}
+<div style="margin-top:14px"><a class="btn" href="{{.BackTo}}">返回</a></div>
+{{template "foot" .}}{{end}}

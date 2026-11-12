@@ -1,0 +1,103 @@
+{{define "owner.html"}}{{template "head" .}}
+<h1 class="page">店长工作台 · 发布时段与日清</h1>
+<p class="desc">发布可预约时段；收店核查当日各时段预约与收款去向</p>
+{{if .Msg}}<div class="msgbar">{{.Msg}}</div>{{end}}
+
+<div class="card">
+<h3>发布可预约时段</h3>
+<form method="post" action="/owner/slots" class="row" style="align-items:flex-end">
+  <div><label>开始时间</label><input type="datetime-local" name="start_time" required></div>
+  <div><label>结束时间</label><input type="datetime-local" name="end_time" required></div>
+  <div style="width:120px"><label>名额</label><input type="number" name="capacity" value="3" min="1"></div>
+  <div><button class="btn" type="submit">发布时段 →</button></div>
+</form>
+<p class="muted">须录入明确的开始/结束时间与名额；时段过期自动关闭，不再可预约。</p>
+</div>
+
+<div class="card">
+<h3>日清总览（{{.Date}}）</h3>
+<form method="get" action="/owner" class="row" style="align-items:flex-end;margin-bottom:10px">
+  <div><label>统计日期（按时段开始时间归属）</label><input type="date" name="date" value="{{.Date}}"></div>
+  <div><button class="btn small" type="submit">查询</button></div>
+</form>
+<div class="grid3" style="grid-template-columns:repeat(4,1fr)">
+  <div class="kpi"><div class="v">{{fen .Report.ReceivedFen}}</div><div class="t">已收款（不含异常支付）</div></div>
+  <div class="kpi"><div class="v">{{fen .Report.RefundedFen}}</div><div class="t">已退款（回调成功）</div></div>
+  <div class="kpi"><div class="v">{{fen .Report.NetFen}}</div><div class="t">实收 = 已收款 − 已退款</div></div>
+  <div class="kpi warn"><div class="v">{{fen .Report.RefundPendingFen}}</div><div class="t">退款待跟进</div></div>
+</div>
+<p class="muted">未到店 {{.Report.NoShowCount}} 单（{{fen .Report.NoShowFen}}，单独统计，不计入已完成服务收入）；已完成服务收入 {{fen .Report.CompletedFen}}。不能把所有已付款都计作已完成服务。</p>
+</div>
+
+<div class="card">
+<h3>当日各时段</h3>
+<table><tr><th>时段</th><th>有效预约</th><th>已完成</th><th>取消</th><th>未到店</th><th>退款待跟进</th></tr>
+{{range .Report.SlotRows}}
+<tr><td>{{.SlotRange}}</td><td>{{.ValidCount}}</td><td>{{.CompletedCount}}</td><td>{{.CancelledCount}}</td><td>{{.NoShowCount}}</td><td>{{.RefundPendingCount}}</td></tr>
+{{end}}</table>
+</div>
+
+<div class="card">
+<h3>当日预约与收款明细</h3>
+<table><tr><th>时间</th><th>订单</th><th>用户·宠物</th><th>时段</th><th>状态</th><th>说明</th><th>金额</th><th>未到店标记</th></tr>
+{{$date := .Date}}
+{{range .Report.Records}}
+<tr>
+  <td>{{.CreatedAt}}</td><td>{{.OrderNo}}</td><td>{{.UserPet}}</td><td>{{.SlotRange}}</td>
+  <td>{{.StatusText}}</td><td>{{.Detail}}</td><td>{{fen .AmountFen}}</td>
+  <td>
+    {{if eq .StatusText "已确认"}}<span class="muted">结束后可标记</span>{{end}}
+    {{if eq .StatusText "未到店"}}<span class="muted">原因可编辑</span>{{end}}
+  </td>
+</tr>
+{{end}}</table>
+</div>
+
+<div class="card">
+<h3>标记未到店 / 编辑原因（仅时段结束后可见）</h3>
+<table><tr><th>订单</th><th>宠物</th><th>状态</th><th>操作</th></tr>
+{{range .Bookings}}
+{{if or (eq .Status "confirmed") (eq .Status "no_show")}}
+<tr>
+  <td>{{.OrderNo}}<br><span class="muted">{{.SlotStart}}</span></td>
+  <td>{{.PetName}}</td><td>{{.StatusText}}</td>
+  <td>
+    {{if eq .Status "confirmed"}}
+      <form method="post" action="/owner/noshow" class="row">
+        <input type="hidden" name="booking_id" value="{{.Id}}">
+        <input name="reason" placeholder="未到店原因（必填）" style="width:180px" required>
+        <button class="btn small gray" type="submit">标记未到店</button>
+      </form>
+    {{else}}
+      <form method="post" action="/owner/noshow/{{.Id}}/reason" class="row">
+        <input name="reason" value="{{.NoShowReason}}" placeholder="编辑原因" style="width:180px" required>
+        <button class="btn small gray" type="submit">更新原因</button>
+      </form>
+    {{end}}
+  </td>
+</tr>
+{{end}}
+{{end}}
+</table>
+<p class="muted">未到店不能自动生成，必须店长手动标记；标记状态不可回退；不自动退款、不自动返还名额。</p>
+</div>
+{{template "foot" .}}{{end}}
+
+{{define "clock.html"}}{{template "head" .}}
+<h1 class="page">教学时钟</h1>
+<p class="desc">可把服务端"当前时间"拨到任意时刻，用于演示 5 分钟支付超时、2 小时取消边界、时段开始/结束等规则（题面允许的可配置教学时钟）</p>
+<div class="card">
+<p>当前教学时间：<b>{{.Now}}</b>（偏移 {{.OffsetSec}} 秒）</p>
+<form method="post" action="/clock" class="row" style="align-items:flex-end">
+  <div><label>偏移量（秒，正=未来，负=过去，0=恢复真实时间）</label>
+  <input name="offset_sec" value="{{.OffsetSec}}" style="width:200px"></div>
+  <div><button class="btn" type="submit">应用</button></div>
+</form>
+<div class="row" style="margin-top:12px">
+  <form method="post" action="/clock"><input type="hidden" name="offset_sec" value="0"><button class="btn small gray">恢复真实时间</button></form>
+  <form method="post" action="/clock"><input type="hidden" name="offset_sec" value="3600"><button class="btn small">+1 小时</button></form>
+  <form method="post" action="/clock"><input type="hidden" name="offset_sec" value="7200"><button class="btn small">+2 小时（演示取消边界）</button></form>
+  <form method="post" action="/clock"><input type="hidden" name="offset_sec" value="-604800"><button class="btn small">-7 天（演示退款回调超时）</button></form>
+</div>
+</div>
+{{template "foot" .}}{{end}}
