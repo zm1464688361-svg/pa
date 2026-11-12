@@ -51,6 +51,10 @@ jobs:
           echo "total coverage: ${total}%"
           awk -v t="$total" 'BEGIN { if (t+0 < 85) { print "FAIL: coverage " t "% < 85%"; exit 1 } }'
 
+      # 题面要求"整体与各核心业务包分别 ≥85%"，仅看整体会漏判。
+      - name: coverage per core package (gate >= 85%)
+        run: go run ./tools/covergate -min 85
+
       - name: upload coverage profile
         uses: actions/upload-artifact@v4
         with:
@@ -65,3 +69,76 @@ jobs:
         run: docker build --build-arg TARGET=service -t pa-service .
       - name: build image (gateway)
         run: docker build --build-arg TARGET=gateway -t pa-gateway .
+
+  # 仅对经 PR 合并且门禁通过的主分支版本执行部署 + 健康检查 + 业务冒烟。
+  # 教学验收环境以本 runner 的 compose 部署代替；部署版本 = 本次 main 合并提交。
+  deploy:
+    needs: [check, docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      MYSQL_ROOT_PASSWORD: root
+      DEPLOY_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 记录部署版本
+        run: |
+          echo "部署提交: $DEPLOY_SHA" > deploy-record.txt
+          git log -1 --format='提交信息: %s%n提交时间: %ad' --date=iso >> deploy-record.txt
+          cat deploy-record.txt
+
+      - name: 构建镜像（compose）
+        run: docker compose build
+
+      - name: 部署（compose up）
+        run: |
+          docker compose up -d mysql service gateway paysim
+          docker compose ps
+
+      - name: 初始化数据（seed，幂等）
+        run: docker compose --profile tools run --rm seed
+
+      - name: 健康检查（网关 + RPC 端口）
+        run: |
+          ok=0
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://127.0.0.1:8081/login; then
+              echo "网关健康：第 $i 次探测通过"
+              ok=1
+              break
+            fi
+            # 网关可能先于 RPC 就绪而退出，每 20 秒重启一次
+            if [ $((i % 10)) -eq 0 ]; then
+              docker compose restart gateway >/dev/null 2>&1 || true
+            fi
+            sleep 2
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "网关健康检查失败"; docker compose ps; exit 1
+          fi
+          (echo > /dev/tcp/127.0.0.1/9001) 2>/dev/null && echo "RPC 9001 可达" || echo "RPC 9001 不可达（非致命，继续冒烟验证业务链路）"
+          (echo > /dev/tcp/127.0.0.1/9002) 2>/dev/null && echo "paysim 9002 可达" || echo "paysim 9002 不可达（非致命）"
+
+      - name: 业务冒烟（登录→发布时段→预约→名额扣减→教学时钟）
+        run: |
+          chmod +x scripts/smoke.sh
+          scripts/smoke.sh http://127.0.0.1:8081 2>&1 | tee smoke.log
+
+      - name: 上传部署与冒烟记录
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-record
+          path: |
+            deploy-record.txt
+            smoke.log
+          if-no-files-found: warn
+
+      - name: 失败时输出容器日志（便于回退定位）
+        if: failure()
+        run: docker compose logs --no-color --tail=200 | tee deploy-failure.log
+
+      - name: 回退演练（停止本次发布）
+        if: always()
+        run: docker compose down -v
