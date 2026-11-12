@@ -6,36 +6,74 @@
 
 宠物到店服务（洗护/美容）预约系统，包含四种角色：店长、宠物主人、前台及服务人员、客服。
 核心链路：店长发布可预约时段 → 主人选宠提交预约并支付 → 前台核销 → 登记服务开始/完成 → 统计营收。
-技术栈尚未确定；确定后请在本节补充安装、构建、测试命令（命令必须真实可执行后再写入）。
 
-## 安装 / 构建 / 测试（已确定）
+## 工程骨架（已落地，2026-11-12 实测）
 
-技术栈：Go 1.27 + Hertz（HTTP 网关，端口 8081）+ Kitex（RPC，端口 9001）+ GORM + MySQL 8.0（库名 `petshop`）+ 模拟支付渠道 pay_sim（端口 9002）。以下命令均已在本机（Windows）真实验证可执行。
+技术栈：Go 1.27.1 + Hertz（HTTP 网关，8081）+ Kitex（RPC，9001）+ Thrift IDL + GORM + MySQL 8.0（业务库 `petshop`，测试库 `petshop_test`）+ 模拟支付渠道 pay_sim（9002）。
+模块路径：`github.com/zm1464688361-svg/pa`（`go mod verify` → all modules verified）。
+
+```
+cmd/service         Kitex RPC 服务（全部业务规则入口，9001）
+cmd/gateway         Hertz 网关（页面 + 重定向，8081；模板经 go:embed 编入二进制）
+cmd/paysim          模拟支付渠道（9002，含支付/退款回调的手动触发）
+cmd/seed            幂等种子数据（6 账号/3 宠物/3 时段）
+internal/biz        业务规则（时段/预约/支付/取消/核销/退款/报表）
+internal/clock      教学时钟（内存偏移 + clock_offsets 单行持久化）
+internal/model      GORM 模型
+internal/repo       连接/迁移（MySQL 命名锁串行化）/审计写入
+internal/{config,session,sign,errs,paysim}
+idl/petshop.thrift  唯一 IDL 源；改后执行 `kitex -module github.com/zm1464688361-svg/pa idl/petshop.thrift`
+kitex_gen/          生成代码，禁止手改
+scripts/e2e.ps1     四角色端到端验收脚本（结果写入 docs/verification.md）
+```
 
 ```bash
 # 前置：MySQL 中创建库（首次）
 mysql -uroot -p -e "CREATE DATABASE IF NOT EXISTS petshop CHARACTER SET utf8mb4"
-# 前置：复制 config.example.yaml 为 config.local.yaml 并填入 db_dsn（该文件不入库）
+# 前置：复制 config.example.yaml 为 config.local.yaml 并填入 db_dsn / test_dsn（该文件不入库）
 
 make build      # 编译 service/gateway/paysim/seed 到 bin/
-make seed       # 初始化演示数据（幂等可重复执行）
-make test       # 全部单元测试
-make cover      # 覆盖率（核心包门禁 ≥85%，输出 coverage/cover.out）
-make race       # 并发/竞争检测
+make seed       # 初始化演示数据（按 username / start_time 去重，可重复执行）
+make test       # 全部单元测试（-p 1 串行，见下方说明）
+make cover      # 覆盖率（口径=./internal/... 全包，门禁 ≥85%，输出 coverage/cover.out）
+make race       # 并发/竞争检测（需 CGO，本机无 gcc 时由 CI 执行）
 make vet        # go vet
-make run-all    # 本地起服务（或分别 go run ./cmd/{service,gateway,paysim}）
+make run-all    # Windows：编译并后台起 service/gateway/paysim 三进程
 ```
 
 - 服务启动顺序：MySQL → `service`(9001) → `gateway`(8081) → `paysim`(9002)。
-- 页面入口：http://127.0.0.1:8081/login （预置账号：owner/user1/user2/user3/front/support）。
+- 页面入口：http://127.0.0.1:8081/login （预置账号：owner/user1/user2/user3/front/support，密码见 `cmd/seed`）。
 - 模拟支付渠道管理页：http://127.0.0.1:9002/
-- 禁止提交密钥：数据库 DSN 通过环境变量 `DB_DSN` 或 `config.local.yaml` 提供。
+- 教学时钟：页面 http://127.0.0.1:8081/clock 可设置偏移秒数（正=未来）；偏移持久化在 `clock_offsets.offset_sec`，所有业务时间判断与页面页脚展示均走该时钟，禁止在业务代码里直接调用 `time.Now()`。
+- 禁止提交密钥：数据库 DSN 通过环境变量 `DB_DSN` / `TEST_DB_DSN` 或 `config.local.yaml` 提供。
+
+### 骨架验证记录（2026-11-12 本机 Windows 实测）
+
+| 命令 | 结果 |
+|---|---|
+| `go version` | go1.27.1 windows/amd64 |
+| `go mod verify` | all modules verified |
+| `make build` | 产出 `bin/service.exe`、`bin/gateway.exe`、`bin/paysim.exe`、`bin/seed.exe` |
+| `make vet` | 无输出，退出码 0 |
+| `gofmt -l .` | 无输出 |
+| `make test` | 8 个包全部 `ok`（biz 14.2s） |
+| `make cover` | `total: 85.5%`（≥85% 门禁） |
+| `make seed`（连续两次） | 演示时段按开始时间去重，不重复插入（users=6 pets=3） |
+| 启动三进程 | 8081/9001/9002 均监听；`/login` 200；`/slots` 渲染出次日 14:00 时段与名额 |
+| `POST /clock offset_sec=7200` | 页脚与页面时间 +2h，`clock_offsets.offset_sec=7200`；置 0 复位 |
+| `make race` | 本机失败：`-race requires cgo`（无 gcc），改由 CI ubuntu 执行并上传覆盖率原件 |
+
+已知限制（不得隐瞒）：
+
+- 本机无 CGO 工具链，`make race` 无法本地执行；等价本地验证为 `make test`，竞态检测以 CI 结果为准。
+- 各包测试共用同一物理库 `petshop_test`，因此 Makefile 与 CI 的测试步骤统一加 `-p 1` 串行，避免并行 AutoMigrate（1050）与清库互相干扰。
 
 ## 代码风格与提交规范（已确定）
 
 - 代码风格：Go 官方 gofmt；提交前必须 `gofmt -l .` 无输出、`go vet ./...` 通过。
 - 提交信息执行 `commit-convention.md`：`[类型] [版本号] [需求/Bug编号] 中文描述`；feat/fix 必须关联真实飞书工作项编号（项目 `r17te9`），提交前用 `meegle workitem get --work-item-id <编号> --project-key r17te9` 核验并保留输出。
 - 一个提交只做一件事；禁止提交密钥、内网地址等敏感信息，敏感配置一律通过环境变量或本地配置文件（加入 `.gitignore`）获取。
+- 分支流程：开发在 `zhou` 分支进行 → 推送到远端 → 开 PR 指向 `main` → CI（gofmt/vet/race/覆盖率≥85%/镜像构建）全绿后合并；禁止直接向 `main` 提交。`main` 为默认分支与交付分支。
 
 ## 角色与权限矩阵
 
