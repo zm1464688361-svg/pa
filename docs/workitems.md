@@ -42,9 +42,11 @@
 |---|---|
 | 开发分支 | `zhou` |
 | 主分支 | `main`（仓库默认分支） |
-| PR | #1 `https://github.com/zm1464688361-svg/pa/pull/1`（zhou → main，13 个提交） |
-| 合并提交 | `ae5075232ec682300d9ebaa42a74dcb6dc777464`（merge 方式，保留开发分支原始提交） |
-| CI | `check`（gofmt/vet/race/覆盖率≥85%）与 `docker`（镜像构建）在合并前于 `6492121` 上全部通过 |
+| PR #1 | `https://github.com/zm1464688361-svg/pa/pull/1`（zhou → main，13 个提交），合并提交 `ae5075232ec682300d9ebaa42a74dcb6dc777464` |
+| PR #2 | 报表字段纠偏 + 越权拦截 + 端到端验收脚本，3 提交，合并提交 `e6f71121b023ce47ba0caf97c65256df115bce8a` |
+| PR #3 | 缺陷记录与验收结果登记，1 提交，合并提交 `a9133905b18f8dad3d61ef3b870b205a2598cc47`（该提交的 CI 暴露并发迁移缺陷，由 PR #4 修复） |
+| PR #4 | 工程骨架修复（页脚时钟 / 并发迁移锁 / Makefile 目标），合并提交 `7713bc8e0ad09ee45590dbf9816c03677cf60ab1` |
+| CI | `check`（gofmt/vet/race/覆盖率≥85%）与 `docker`（镜像构建）在每次合并前均全绿 |
 
 CI 失败修复过程（保留真实循环记录）：
 
@@ -57,6 +59,7 @@ CI 失败修复过程（保留真实循环记录）：
 - [ ] meegle 插件凭证到位后补核验 #001，更新本表
 - [x] 推送 `zhou`、创建 PR #1 并合并 `main`
 - [x] PR #2：报表字段/越权拦截修复 + 端到端验收脚本（合并提交 `e6f7112`）
+- [x] PR #4：工程骨架修复与 AGENTS.md 实测更新（合并提交 `7713bc8`）
 - [ ] 讲解效果视频录制与群提交（学生本人完成，登记时间点）
 - [ ] 部署验证（本机 Docker Desktop 未启动；CI 已完成镜像构建验证，实际部署待验收环境执行）
 
@@ -66,8 +69,29 @@ CI 失败修复过程（保留真实循环记录）：
 |---|---|---|---|---|
 | 缺陷-1 | `scripts/e2e.ps1` 访问 `/owner` | 店长报表页 500：模板引用 `CreatedAt`，且 IDL 未下发 `completedFen/noShowCount/noShowFen` | `ca5ec6c`（PR #2） | 待补登记 |
 | 缺陷-2 | 同上，主人越权访问 `/owner`、`/support` 等 | 只读页仅判 RPC 传输错误，业务错误 Base.Code≠0 被静默放行，越权者看到空列表而非拒绝 | `ca5ec6c`（PR #2） | 待补登记 |
+| 缺陷-3 | 骨架验证：`POST /clock offset_sec=7200` 后比对页脚 | 页脚「当前教学时间」取网关本机 `time.Now()`，教学时钟偏移对页面不生效（拨 +2h 页脚仍是真实时间） | `c2462f0`（PR #4） | 待补登记 |
+| 缺陷-4 | CI `check` 的 race 步骤真实失败 | 多包并行测试共用 `petshop_test` 库，并发 AutoMigrate 报 `Error 1050 Table already exists`；本地因时序侥幸通过 | `c2462f0`（PR #4） | 待补登记 |
+| 缺陷-5 | 骨架验证：核对 Makefile 与 help 输出 | `help` 宣称的 `run-all` 目标不存在；`clean` 使用 `rm -rf` 在 Windows cmd 下必失败 | `c2462f0`（PR #4） | 待补登记 |
 
-> 说明：按 `commit-convention.md`，`fix` 必须关联真实 Bug 编号；两处缺陷尚未在飞书项目登记 Bug 单（本机无 meegle 凭证），故本次修复提交使用 `opt` 类型并在 PR 描述中写明缺陷详情，取得凭证后补登记 Bug 并回填编号。
+> 说明：按 `commit-convention.md`，`fix` 必须关联真实 Bug 编号；上述缺陷尚未在飞书项目登记 Bug 单（本机无 meegle 凭证），故修复提交使用 `opt` 类型并在 PR 描述中写明缺陷详情，取得凭证后补登记 Bug 并回填编号。
+
+## 工程骨架验证（2026-11-12）
+
+对照 `docs/plan.md` Task 1 逐条实跑，完整命令与输出摘要记录在 `AGENTS.md` 的「骨架验证记录」表：
+
+| 项 | 结果 |
+|---|---|
+| Go module | `go mod verify` → all modules verified（go1.27.1） |
+| 构建 | `make build` → service/gateway/paysim/seed 四个可执行文件 |
+| 静态检查 | `make vet` 退出码 0；`gofmt -l .` 无输出 |
+| 单测 | `make test` 8 包全绿（`-p 1` 串行） |
+| 覆盖率 | `make cover` → 85.5%（门禁 85%） |
+| seed 幂等 | 连续执行两次不重复插入（users=6 pets=3，演示时段按 start_time 去重） |
+| Hertz 网关 | 8081 `/login` 200；`/slots` 渲染次日时段与名额 |
+| Kitex RPC | 页面数据经 9001 RPC 返回（非网关直连 DB） |
+| MySQL | 业务库 `petshop`、测试库 `petshop_test` 迁移与用例均通过 |
+| 教学时钟 | `POST /clock offset_sec=7200` → 页脚与页面时间 +2h、`clock_offsets` 持久化，置 0 复位 |
+| race | 本机无 gcc 无法执行，由 CI ubuntu 执行并通过（`2b59e59` 两轮全绿） |
 
 ## 端到端验收（2026-11-12）
 
