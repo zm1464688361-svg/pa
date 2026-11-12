@@ -58,6 +58,7 @@ CI 失败修复过程（保留真实循环记录）：
 
 - [ ] meegle 插件凭证到位后补核验 #001，更新本表
 - [x] 推送 `zhou`、创建 PR #1 并合并 `main`
+- [x] `main` 分支保护已配置（2026-11-12 22:20：仓库转公开后启用经典保护——必须走 PR（0 个批准，单人仓库适配）、禁强推、禁删除；GitHub API 核验 protected=true。转公开须知：历史提交含已轮换失效的旧 root 口令）
 - [x] PR #2：报表字段/越权拦截修复 + 端到端验收脚本（合并提交 `e6f7112`）
 - [x] PR #4：工程骨架修复与 AGENTS.md 实测更新（合并提交 `7713bc8`）
 - [ ] 讲解效果视频录制与群提交（学生本人完成，登记时间点）
@@ -159,3 +160,18 @@ CI 失败修复过程（保留真实循环记录）：
 3. 重启前后快照比对：一致（见上）。
 
 说明：本轮验证与脚本扩充由 AI 在用户明确指令下执行并如实登记；讲解视频可沿 `docs/verification.md` 场景顺序录制演示。
+
+## 第五轮：仓库公开后的流水线证据核验（2026-11-12 22:20-22:35）
+
+仓库转公开后 Actions 运行与制品可独立访问，对既往"声称级"证据完成 API 核验：
+
+1. **运行列表**：086f961（run 43203449605，main push）/ 66b2ea6（run 43214649447）/ cf92c15（run 43230358750）/ f129d18（run 43233974893）四条 main push 流水线全部 `conclusion=success`；各 PR 触发 run 除历史真实失败循环（00ab514/5b0636d/d83fd2f 的 check 失败）外全部成功，失败循环与文档记录一致。
+2. **f129d18 run 43233974893 三 job 明细**：
+   - `check`：gofmt / vet / build / test with race / coverage(≥85%) / coverage per core package(≥85%) / upload coverage profile 全部 success；
+   - `docker`：service/gateway 镜像构建 success；
+   - `deploy`：记录部署版本 / compose 构建 / compose up / seed 幂等 / 健康检查 / 业务冒烟 / 上传部署与冒烟记录 / **回退演练（停止本次发布）** 全部 success。
+3. **制品核验**：`coverage-profile`（37416B，解压 cover.out 369334B，sha256 `16f8d7adbe5341d9fc180833fe6fee35d742bca9d4262df85bdb182947f41e07`）、`deploy-record`（616B）均可下载。
+4. **CI 制品覆盖率（绑定 f129d18）**：整体 87.7%；逐包 biz 92.5% / repo 93.6% / paysim 93.7% / clock 90.6% / config 85.4% / session 98.1%，其余 100%，全部 ≥85%。
+5. **干净环境复现**：deploy job 在全新 runner 容器 compose 构建+up+seed+健康检查+冒烟，等效于按说明的干净环境复现。
+
+说明：本节核验由 AI 在用户明确指令下执行（含转公开操作）；转公开后历史可见性变化已在待办处声明。
