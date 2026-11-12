@@ -79,3 +79,27 @@ func TestWriteAuditAndClockRow(t *testing.T) {
 	}
 	db.Exec("DELETE FROM audit_logs WHERE action = ?", "unit_test")
 }
+
+// TestDropLegacyNotifyIndex 幂等键迁移兼容：旧全局 notify_id 唯一索引应被移除，重复执行幂等（缺陷-9）。
+func TestDropLegacyNotifyIndex(t *testing.T) {
+	dsn := testDSN(t)
+	db, err := Open(dsn, true)
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	for i := 0; i < 2; i++ {
+		if err := dropLegacyNotifyIndex(db); err != nil {
+			t.Fatalf("第 %d 次清理旧索引失败: %v", i+1, err)
+		}
+	}
+	var n int64
+	if err := db.Raw(
+		"SELECT COUNT(*) FROM information_schema.statistics "+
+			"WHERE table_schema = DATABASE() AND table_name = 'payment_records' AND index_name = ?",
+		"idx_payment_records_notify_id").Scan(&n).Error; err != nil {
+		t.Fatalf("查询索引: %v", err)
+	}
+	if n != 0 {
+		t.Fatal("旧全局 notify_id 唯一索引应已移除")
+	}
+}
