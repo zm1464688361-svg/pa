@@ -476,7 +476,9 @@ func TestDailyReport(t *testing.T) {
 	front := mkUser(t, b, "front", "front", 1)
 	sup := mkUser(t, b, "support", "support", 0)
 	owner := mkUser(t, b, "owner", "owner", 0)
-	start := b.Clock.Now().Add(26 * time.Hour)
+	// 固定基准到次日 10:00：运行时刻靠近午夜时 +3h 不再跨天，用例全时段可重复（缺陷-12）
+	base := b.Clock.Now().Add(26 * time.Hour)
+	start := time.Date(base.Year(), base.Month(), base.Day(), 10, 0, 0, 0, base.Location())
 	day := start.Format("2006-01-02")
 	slot := mkSlot(t, b, start, start.Add(time.Hour), 3)
 
