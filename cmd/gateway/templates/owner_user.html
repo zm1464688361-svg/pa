@@ -1,0 +1,151 @@
+{{define "slots.html"}}{{template "head" .}}
+<h1 class="page">为宠物预约一次洗护</h1>
+<p class="desc">2026 演示日 · {{.ItemName}} · 预约款 {{fen .PriceFen}}（预约款即本次服务全款）</p>
+{{if ne .Base.Code 0}}<div class="banner err">{{.Base.Msg}}</div>{{end}}
+<div class="card">
+<h3>选择可预约时段</h3>
+<table><tr><th>时段</th><th>名额</th><th>状态</th><th>操作</th></tr>
+{{$pets := .Pets}}
+{{range .Slots}}
+<tr>
+  <td>{{.Slot.StartTime}} ~ {{shortTime .Slot.EndTime}}</td>
+  <td>余 {{.Slot.Remaining}} / {{.Slot.Capacity}}</td>
+  <td>{{if .Bookable}}<span class="badge green">可预约</span>{{else}}<span class="badge warn">{{.Reason}}</span>{{end}}</td>
+  <td>
+  {{if and .Bookable $pets}}
+    <form method="post" action="/bookings" class="row">
+      <input type="hidden" name="slot_id" value="{{.Slot.Id}}">
+      <select name="pet_id" style="width:auto">
+        {{range $pets}}<option value="{{.ID}}">{{.Name}}（{{.Breed}}）</option>{{end}}
+      </select>
+      <button class="btn small" type="submit">选择该时段预约</button>
+    </form>
+  {{else if not $pets}}<span class="muted">无宠物档案</span>
+  {{end}}
+  </td>
+</tr>
+{{end}}</table>
+</div>
+<div class="card">
+<h3>预约须知、名额与取消政策</h3>
+<div class="notice">
+· 提交预约后生成待支付订单，占用名额 5 分钟，超时未支付自动关闭并释放名额。<br>
+· 支付成功后预约确认；开始前 ≥2 小时可自助取消全额退款；不足 2 小时须提交取消原因，由客服审核。<br>
+· 同一宠物同一时段仅一条有效预约；名额不足或时段已开始时不可预约。<br>
+· 到店出示核销码，由前台核销后开始服务。
+</div>
+</div>
+{{template "foot" .}}{{end}}
+
+{{define "bookings.html"}}{{template "head" .}}
+<h1 class="page">我的预约订单</h1>
+<p class="desc">这里能看到预约结果、付款状态与实际服务结果的对应关系</p>
+{{if .Msg}}<div class="msgbar">{{.Msg}}</div>{{end}}
+{{range .Bookings}}
+<div class="card">
+  <div class="row" style="justify-content:space-between;align-items:center">
+    <div>
+      <b>{{.PetName}}</b> · {{.SlotStart}} ~ {{.SlotEnd}}<br>
+      <span class="muted">订单 {{.OrderNo}} · 预约款 {{fen .AmountFen}}</span>
+    </div>
+    <div>{{.StatusText}}</div>
+  </div>
+  <div style="margin-top:10px">
+    <a class="btn small" href="/bookings/{{.Id}}">查看详情</a>
+    {{if eq .Status "pending_payment"}}
+      <form method="post" action="/pay/{{.OrderNo}}" style="display:inline">
+        <input type="hidden" name="result" value="success">
+        <button class="btn small lime" type="submit">模拟支付成功</button>
+      </form>
+      <form method="post" action="/pay/{{.OrderNo}}" style="display:inline">
+        <input type="hidden" name="result" value="fail">
+        <button class="btn small gray" type="submit">模拟支付失败</button>
+      </form>
+      <form method="post" action="/bookings/{{.Id}}/cancel-unpaid" style="display:inline">
+        <button class="btn small gray" type="submit">放弃（取消待支付）</button>
+      </form>
+    {{end}}
+    {{if eq .Status "confirmed"}}<a class="btn small" href="/bookings/{{.Id}}/cancel">申请取消</a>{{end}}
+  </div>
+</div>
+{{end}}
+{{template "foot" .}}{{end}}
+
+{{define "booking_detail.html"}}{{template "head" .}}
+<h1 class="page">{{if eq .B.Status "pending_payment"}}名额已保留，请完成付款
+{{else if eq .B.Status "confirmed"}}预约已确认，等你到店
+{{else if eq .B.Status "completed"}}洗护已完成，可带宠物回家
+{{else}}{{.B.StatusText}}{{end}}</h1>
+<div class="desc">2026 演示日 · {{.B.PetName}} 的洗护预约</div>
+{{if eq .B.Status "pending_payment"}}
+<div class="banner warn">待支付中：订单占用名额 5 分钟，超时自动关闭并释放名额</div>
+{{end}}
+{{if eq .B.Status "confirmed"}}
+<div class="banner ok">已确认 / 等待到店 · 到店后请向前台出示核销码</div>
+{{end}}
+{{if eq .B.Status "cancelled"}}
+<div class="banner {{if .B.SlotReleased}}ok{{else}}warn{{end}}">
+{{if .B.SlotReleased}}已取消 / 退款已到账{{else}}已取消 / 退款处理中（退款成功后名额自动释放）{{end}}</div>
+{{end}}
+{{if eq .B.Status "no_show"}}<div class="banner warn">已关闭 / 未到店 · 原因：{{.B.NoShowReason}}</div>{{end}}
+<div class="card">
+<h3>预约信息</h3>
+<table>
+<tr><td>宠物</td><td>{{.B.PetName}}</td></tr>
+<tr><td>预约时段</td><td>{{.B.SlotStart}} ~ {{.B.SlotEnd}}</td></tr>
+<tr><td>状态</td><td>{{.B.StatusText}}</td></tr>
+<tr><td>预约款</td><td class="money">{{fen .B.AmountFen}}（全款）</td></tr>
+{{if eq .B.Status "pending_payment"}}<tr><td>支付剩余时间</td><td><span class="countdown" data-deadline="{{.B.PayDeadline}}">{{.B.PayDeadline}}</span></td></tr>{{end}}
+</table>
+{{if eq .B.Status "confirmed"}}
+<div style="margin-top:14px">
+<div class="muted" style="margin-bottom:6px">到店核销码</div>
+<div class="bigcode">{{.B.OrderNo}}</div>
+</div>
+{{end}}
+</div>
+{{if eq .B.Status "pending_payment"}}
+<div class="card">
+<h3>模拟支付</h3>
+<form method="post" action="/pay/{{.B.OrderNo}}">
+<input type="hidden" name="result" value="success">
+<button class="btn lime" type="submit">模拟支付成功（¥{{fen .B.AmountFen}}）</button>
+</form>
+<div class="row" style="margin-top:8px">
+<form method="post" action="/pay/{{.B.OrderNo}}" style="display:inline">
+<input type="hidden" name="result" value="fail"><button class="btn gray small" type="submit">模拟支付失败</button></form>
+<form method="post" action="/bookings/{{.B.Id}}/cancel-unpaid" style="display:inline">
+<button class="btn gray small" type="submit">主动取消（释放名额）</button></form>
+<a class="btn gray small" href="/pay-hold/{{.B.OrderNo}}">挂起不回调（演示迟到支付）</a>
+</div>
+<p class="muted">支付结果经模拟渠道异步回调确认，可刷新页面查看。</p>
+</div>
+{{end}}
+{{if eq .B.Status "confirmed"}}
+<div class="card">
+<h3>取消政策</h3>
+<p class="muted">距服务开始 ≥2 小时：自助取消，全额退款；不足 2 小时：须提交原因，由客服审核，审核期间名额锁定且不可核销。</p>
+<a class="btn" href="/bookings/{{.B.Id}}/cancel">申请取消</a>
+</div>
+{{end}}
+{{template "foot" .}}{{end}}
+
+{{define "cancel_form.html"}}{{template "head" .}}
+<h1 class="page">临近开始，请提交取消原因</h1>
+<div class="banner warn">不足 2 小时 / 需客服审核 · 该预约尚处可履约状态，提交后进入审核，审核期间名额锁定、不可核销。</div>
+<div class="card" style="max-width:560px">
+<h3>取消原因（必填）</h3>
+<form method="post" action="/bookings/{{.B.Id}}/cancel">
+  <textarea name="reason" rows="4" required placeholder="请填写取消原因（空内容不允许提交）"></textarea>
+  <div style="margin-top:12px"><button class="btn" type="submit">提交取消申请 →</button></div>
+</form>
+</div>
+<div class="card">
+<h3>已确认 / 待审核说明</h3>
+<div class="notice">
+· 待审核期间预约仍有效但暂停核销；<br>
+· 客服批准：执行全额退款，退款成功后名额原路释放（仅一次）；<br>
+· 客服驳回：写明拒绝原因，名额解锁，预约回到已确认可正常到店。
+</div>
+</div>
+{{template "foot" .}}{{end}}

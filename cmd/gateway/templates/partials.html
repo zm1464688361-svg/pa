@@ -1,0 +1,91 @@
+{{define "head"}}<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>宠序 · 宠物到店服务预约</title>
+<style>
+:root{--green:#0b3d2e;--green2:#1a5c45;--lime:#c6f24e;--bg:#f4f6f4;--card:#fff;--line:#dde3dd;--warn-bg:#fdf3e0;--warn:#b26a00;--ok-bg:#e8f3ec;--ok:#1a5c45}
+*{box-sizing:border-box}
+body{margin:0;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:#22322a}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:210px;background:var(--green);color:#d7e5dc;padding:20px 14px;flex-shrink:0;display:flex;flex-direction:column}
+.sidebar .logo{font-size:22px;font-weight:700;color:#fff;margin-bottom:2px}
+.sidebar .sub{font-size:11px;color:#9db8a9;margin-bottom:26px}
+.sidebar a{display:block;color:#cfe0d4;text-decoration:none;padding:9px 12px;border-radius:8px;font-size:14px;margin-bottom:4px}
+.sidebar a:hover{background:var(--green2);color:#fff}
+.sidebar a.active{background:var(--lime);color:#0b3d2e;font-weight:600}
+.sidebar .foot{margin-top:auto;font-size:11px;color:#7f9c8c}
+.main{flex:1;padding:22px 28px;max-width:1080px}
+.topbar{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.topbar .crumb{font-size:13px;color:#5c6f63}
+.tabs{margin-left:auto;display:flex;gap:6px}
+.tabs a{font-size:13px;padding:6px 12px;border-radius:16px;text-decoration:none;color:#40584a;background:#e7ece7}
+.tabs a.on{background:var(--green);color:#fff}
+h1.page{font-size:20px;margin:0 0 4px}
+.desc{font-size:13px;color:#6b7d71;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px}
+.card h3{margin:0 0 10px;font-size:15px}
+.badge{display:inline-block;font-size:12px;padding:2px 10px;border-radius:12px;background:#e7ece7;color:#40584a}
+.badge.green{background:var(--ok-bg);color:var(--ok)}
+.badge.warn{background:var(--warn-bg);color:var(--warn)}
+.banner{border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:16px}
+.banner.ok{background:var(--ok-bg);color:var(--ok)}
+.banner.warn{background:var(--warn-bg);color:var(--warn)}
+.banner.err{background:#fde8e8;color:#a33}
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+th{background:#eef2ee;text-align:left;color:#41564a;font-weight:600}
+th,td{border:1px solid var(--line);padding:7px 10px}
+.btn{display:inline-block;background:var(--green);color:#fff;border:0;border-radius:8px;padding:8px 16px;font-size:14px;cursor:pointer;text-decoration:none}
+.btn:hover{background:var(--green2)}
+.btn.lime{background:var(--lime);color:#0b3d2e;font-weight:600}
+.btn.gray{background:#9aa8a0}
+.btn.small{padding:4px 10px;font-size:12px}
+input,select,textarea{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;width:100%}
+label{font-size:13px;color:#41564a;display:block;margin:10px 0 4px}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px}
+.kpi .v{font-size:24px;font-weight:700;color:var(--green)}
+.kpi .t{font-size:12px;color:#6b7d71}
+.kpi.warn .v{color:var(--warn)}
+.muted{color:#8a9a8f;font-size:12px}
+.money{font-weight:700;color:var(--green)}
+.notice{background:#f7f9f5;border:1px dashed var(--line);border-radius:8px;padding:10px 14px;font-size:12px;color:#5c6f63}
+.msgbar{background:#eef6ee;border:1px solid #cfe3cf;color:#2a5a3a;padding:8px 14px;border-radius:8px;font-size:13px;margin-bottom:14px}
+.bigcode{font-size:34px;font-weight:800;letter-spacing:2px;color:var(--green);background:var(--ok-bg);border-radius:10px;padding:16px;text-align:center}
+.countdown{font-size:26px;font-weight:700;color:var(--warn)}
+</style></head>
+<body><div class="layout">
+<aside class="sidebar">
+  <div class="logo">宠序</div>
+  <div class="sub">宠物到店 · 预约系统</div>
+  {{if .User}}
+    {{if eq .User.Role "pet_owner"}}
+      <a href="/slots">时段总览</a>
+      <a href="/bookings">我的预约订单</a>
+    {{else if eq .User.Role "front"}}
+      <a href="/front">接待工作台</a>
+    {{else if eq .User.Role "support"}}
+      <a href="/support">取消审核</a>
+      <a href="/support/refunds">退款跟进</a>
+      <a href="/support/abnormal">异常支付</a>
+    {{else if eq .User.Role "owner"}}
+      <a href="/owner">店长工作台</a>
+    {{end}}
+    <a href="/clock">教学时钟</a>
+    <a href="/logout">退出登录</a>
+  {{end}}
+  <div class="foot">当前教学时间<br>{{.ClockNow}}</div>
+</aside>
+<main class="main">
+<div class="topbar">
+  <span class="crumb">宠序工作台{{if .User}} · {{.RoleName}}{{end}}</span>
+  <span class="tabs">
+    <a href="/login?as=pet_owner">宠物主人</a><a href="/login?as=front">前台/服务</a><a href="/login?as=support">客服</a><a href="/login?as=owner">店长</a>
+  </span>
+</div>
+{{end}}
+
+{{define "foot"}}
+</main></div></body></html>{{end}}

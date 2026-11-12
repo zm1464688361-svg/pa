@@ -1,0 +1,17 @@
+{{define "login.html"}}{{template "head" .}}
+<h1 class="page">登录</h1>
+<p class="desc">使用预置账号进入对应角色工作台（题目要求：账号预置，不实现注册流程）</p>
+{{if .Error}}<div class="banner err">{{.Error}}</div>{{end}}
+<div class="card" style="max-width:420px">
+<form method="post" action="/login">
+  <label>账号</label>
+  <input name="username" value="{{.Username}}" placeholder="owner / user1 / user2 / user3 / front / support">
+  <div style="margin-top:14px"><button class="btn" type="submit">进入工作台</button></div>
+</form>
+</div>
+<div class="card">
+<h3>预置账号</h3>
+<table><tr><th>账号</th><th>角色</th></tr>
+{{range .Accounts}}<tr><td><b>{{.username}}</b></td><td>{{.role}}</td></tr>{{end}}</table>
+</div>
+{{template "foot" .}}{{end}}

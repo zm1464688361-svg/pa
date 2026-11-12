@@ -1,0 +1,4 @@
+interface:
+  display_name: "学生单题项目检查"
+  short_description: "先验收单题业务完成程度，再审计开发与 AI 过程，按十分制给出有证据的评分"
+  default_prompt: "使用 $student-project-audit 检查这名学生指定题目的产出物，优先验收完成程度，再核查开发顺序、AI 提示词与 Skill 使用，输出证据、整改思路和十分制评分。"

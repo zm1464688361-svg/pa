@@ -1,0 +1,5 @@
+# 复制为 config.local.yaml 并填入真实值；config.local.yaml 不入库（见 .gitignore）
+db_dsn: "root:yourpassword@tcp(127.0.0.1:3306)/petshop?charset=utf8mb4&parseTime=True&loc=Local"
+rpc_hostport: "127.0.0.1:9001"
+pay_sim_url: "http://127.0.0.1:9002"
+biz_callback: "http://127.0.0.1:8081"

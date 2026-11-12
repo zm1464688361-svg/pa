@@ -1,0 +1,17 @@
+{
+  "snapshot_date": "2026-11-11",
+  "timezone": "Asia/Shanghai",
+  "scope": "共同要求与教师指定单题；教师明确新版优先",
+  "sources": [
+    {
+      "source_path": "/Users/fuyx/Documents/Codex/2026-11-11/xian/outputs/Go项目业务场景题.md",
+      "bundled_path": "assignment.md",
+      "sha256": "4e49fcd8b2e454f27bc5168d2018187613e34847e2fd5adc6cba8409779d26e8"
+    },
+    {
+      "source_path": "/Users/fuyx/Documents/Codex/2026-11-11/xian/outputs/commit-convention.md",
+      "bundled_path": "commit-convention.md",
+      "sha256": "8db6fcbdcba9b72e53a6dddce7d58762fbd1de58a1c5afe51e48c8bb075af28e"
+    }
+  ]
+}

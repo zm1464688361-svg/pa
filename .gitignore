@@ -1,1 +1,7 @@
 .idea/
+config.local.yaml
+*.exe
+coverage/
+bin/
+*.exe~
+outputs/

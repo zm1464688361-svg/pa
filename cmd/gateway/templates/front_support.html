@@ -1,0 +1,118 @@
+{{define "front.html"}}{{template "head" .}}
+<h1 class="page">接待工作台</h1>
+<p class="desc">核验到店（核销）→ 登记服务开始 → 登记服务完成；禁止跳步，重复操作幂等</p>
+{{if .Msg}}<div class="msgbar">{{.Msg}}</div>{{end}}
+{{range .Bookings}}
+<div class="card">
+  <div class="row" style="justify-content:space-between;align-items:center">
+    <div>
+      <b>{{.PetName}}</b> · {{.UserName}} · {{.SlotStart}} ~ {{.SlotEnd}}<br>
+      <span class="muted">订单 {{.OrderNo}} · {{fen .AmountFen}}</span>
+    </div>
+    <div>{{.StatusText}}</div>
+  </div>
+  <div style="margin-top:10px">
+    {{if eq .Status "confirmed"}}
+      <form method="post" action="/front/{{.Id}}/checkin" style="display:inline"><button class="btn small lime" type="submit">核销（本店 · 确认到店）</button></form>
+    {{end}}
+    {{if eq .Status "checked_in"}}
+      <form method="post" action="/front/{{.Id}}/start" style="display:inline"><button class="btn small" type="submit">登记服务开始</button></form>
+    {{end}}
+    {{if eq .Status "in_service"}}
+      <form method="post" action="/front/{{.Id}}/complete" style="display:inline"><button class="btn small" type="submit">登记服务完成</button></form>
+    {{end}}
+    {{if eq .Status "pending_payment"}}<span class="muted">待支付订单，未确认不可核销</span>{{end}}
+    {{if eq .Status "cancelled"}}<span class="muted">已取消预约，不可核销</span>{{end}}
+    {{if eq .Status "no_show"}}<span class="muted">已标记未到店</span>{{end}}
+    {{if eq .Status "completed"}}<span class="muted">服务已完成（收入已计入）</span>{{end}}
+  </div>
+</div>
+{{end}}
+{{template "foot" .}}{{end}}
+
+{{define "support.html"}}{{template "head" .}}
+<h1 class="page">取消审核处理台</h1>
+<p class="desc">仅可审核临近开始（不足 2 小时）的人工取消申请；审核期间名额锁定、预约不可核销</p>
+{{if .Msg}}<div class="msgbar">{{.Msg}}</div>{{end}}
+<div class="card">
+<h3>待审核 <span class="badge warn">{{len .Requests}}</span></h3>
+<table>
+<tr><th>申请</th><th>订单</th><th>用户·宠物</th><th>时段</th><th>金额</th><th>原因</th><th>状态</th><th>审核</th></tr>
+{{range .Requests}}
+<tr>
+  <td>#{{.Request.Id}} {{if .Request.Urgent}}<span class="badge warn">临近开始</span>{{end}}</td>
+  <td>{{.OrderNo}}</td>
+  <td>{{.UserPet}}</td>
+  <td>{{.SlotRange}}</td>
+  <td>{{fen .AmountFen}}</td>
+  <td>{{.Request.Reason}}</td>
+  <td>{{.StatusText}}{{if .Request.ReviewReason}}<br><span class="muted">{{.Request.ReviewReason}}</span>{{end}}</td>
+  <td>
+    {{if eq .Request.Status "pending"}}
+    <form method="post" action="/support/review">
+      <input type="hidden" name="request_id" value="{{.Request.Id}}">
+      <div class="row"><input name="reason" placeholder="批准/驳回说明" style="width:140px"></div>
+      <button class="btn small lime" name="decision" value="approve" type="submit">批准退款</button>
+      <button class="btn small gray" name="decision" value="reject" type="submit">驳回（写明原因）</button>
+    </form>
+    {{else}}<span class="muted">已处理</span>{{end}}
+  </td>
+</tr>
+{{end}}
+</table>
+<p class="muted">审批原则：批准=执行退款（成功后名额原路释放一次）；驳回=名额解锁、预约回到已确认可正常核销。空原因不允许驳回。</p>
+</div>
+{{template "foot" .}}{{end}}
+
+{{define "refunds.html"}}{{template "head" .}}
+<h1 class="page">退款跟进</h1>
+<p class="desc">退款状态独立可查询；失败可重试（最多 3 次）；7 自然日回调超时持续留待跟进</p>
+{{if .Msg}}<div class="msgbar">{{.Msg}}</div>{{end}}
+<div class="card">
+<table>
+<tr><th>退款单</th><th>预约/订单</th><th>金额</th><th>状态</th><th>重试</th><th>失败原因</th><th>操作</th></tr>
+{{range .Refunds}}
+<tr>
+  <td>{{.RefundNo}}<br><span class="muted">{{.Kind}}</span></td>
+  <td>{{.OrderNo}}</td>
+  <td>{{fen .AmountFen}}</td>
+  <td>{{.StatusText}}{{if .TimeoutFlag}}<br><span class="muted">可在下方模拟渠道再次回调或重试</span>{{end}}</td>
+  <td>{{.RetryCount}} / 3</td>
+  <td>{{.FailReason}}</td>
+  <td>
+    {{if and (ne .Status "success") (ne .Status "final_failed")}}
+      <form method="post" action="/support/refunds/{{.Id}}/retry" style="display:inline"><button class="btn small" type="submit">发起重试</button></form>
+    {{else}}<span class="muted">—</span>{{end}}
+  </td>
+</tr>
+{{end}}
+</table>
+<p class="muted">重试后在 <b>模拟支付渠道管理页（127.0.0.1:9002）</b> 手动发送退款成功/失败回调。</p>
+</div>
+{{template "foot" .}}{{end}}
+
+{{define "abnormal.html"}}{{template "head" .}}
+<h1 class="page">异常支付待处理</h1>
+<p class="desc">订单关闭后收到支付成功 / 同订单重复支付 → 登记于此；核实后发起退款；台账永久保存</p>
+{{if .Msg}}<div class="msgbar">{{.Msg}}</div>{{end}}
+<div class="card">
+<table>
+<tr><th>订单号</th><th>渠道交易号</th><th>金额</th><th>异常原因</th><th>状态</th><th>操作</th></tr>
+{{range .Items}}
+<tr>
+  <td>{{.OrderNo}}</td>
+  <td>{{.ChannelTradeNo}}</td>
+  <td>{{fen .AmountFen}}</td>
+  <td>{{.Reason}}</td>
+  <td>{{.StatusText}}</td>
+  <td>
+    {{if eq .Status "pending"}}
+      <form method="post" action="/support/abnormal/{{.Id}}/refund" style="display:inline"><button class="btn small" type="submit">核实无误，发起退款</button></form>
+    {{else}}<span class="muted">—</span>{{end}}
+  </td>
+</tr>
+{{end}}
+</table>
+<p class="muted">异常支付退款成功也不释放名额、不恢复预约、不返还名额；记录永久保留。</p>
+</div>
+{{template "foot" .}}{{end}}
