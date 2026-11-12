@@ -80,26 +80,32 @@ func TestWriteAuditAndClockRow(t *testing.T) {
 	db.Exec("DELETE FROM audit_logs WHERE action = ?", "unit_test")
 }
 
-// TestDropLegacyNotifyIndex 幂等键迁移兼容：旧全局 notify_id 唯一索引应被移除，重复执行幂等（缺陷-9）。
+// TestDropLegacyNotifyIndex 幂等键迁移兼容：旧全局唯一索引应被移除，重复执行幂等（缺陷-9/10）。
 func TestDropLegacyNotifyIndex(t *testing.T) {
 	dsn := testDSN(t)
 	db, err := Open(dsn, true)
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
-	for i := 0; i < 2; i++ {
-		if err := dropLegacyNotifyIndex(db); err != nil {
-			t.Fatalf("第 %d 次清理旧索引失败: %v", i+1, err)
+	legacy := []struct{ table, index string }{
+		{"payment_records", "idx_payment_records_notify_id"},
+		{"abnormal_payments", "idx_abnormal_payments_channel_trade_no"},
+	}
+	for _, lg := range legacy {
+		for i := 0; i < 2; i++ {
+			if err := dropIndexIfPresent(db, lg.table, lg.index); err != nil {
+				t.Fatalf("第 %d 次清理 %s.%s 失败: %v", i+1, lg.table, lg.index, err)
+			}
 		}
-	}
-	var n int64
-	if err := db.Raw(
-		"SELECT COUNT(*) FROM information_schema.statistics "+
-			"WHERE table_schema = DATABASE() AND table_name = 'payment_records' AND index_name = ?",
-		"idx_payment_records_notify_id").Scan(&n).Error; err != nil {
-		t.Fatalf("查询索引: %v", err)
-	}
-	if n != 0 {
-		t.Fatal("旧全局 notify_id 唯一索引应已移除")
+		var n int64
+		if err := db.Raw(
+			"SELECT COUNT(*) FROM information_schema.statistics "+
+				"WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?",
+			lg.table, lg.index).Scan(&n).Error; err != nil {
+			t.Fatalf("查询索引 %s: %v", lg.index, err)
+		}
+		if n != 0 {
+			t.Fatalf("旧唯一索引 %s.%s 应已移除", lg.table, lg.index)
+		}
 	}
 }
