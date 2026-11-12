@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"fmt"
 	"html/template"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -144,7 +146,7 @@ func render(c *app.RequestContext, page string, data map[string]interface{}) {
 	}
 	u := currentUser(c)
 	data["User"] = u
-	data["ClockNow"] = time.Now().Format("2006-01-02 15:04")
+	data["ClockNow"] = clockNowText()
 	if u != nil {
 		data["RoleName"] = map[string]string{
 			"pet_owner": "宠物主人", "front": "前台/服务人员", "support": "客服", "owner": "店长",
@@ -157,6 +159,30 @@ func render(c *app.RequestContext, page string, data map[string]interface{}) {
 	}
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	c.Write(buf.Bytes())
+}
+
+// clockNowText 返回页脚展示的教学时间：取 RPC 侧时钟（含偏移），
+// 每 500ms 最多查一次，避免每页渲染都打一次 RPC；RPC 异常时回退本机时间。
+var clockCache struct {
+	mu   sync.Mutex
+	at   time.Time
+	text string
+}
+
+func clockNowText() string {
+	clockCache.mu.Lock()
+	defer clockCache.mu.Unlock()
+	if time.Since(clockCache.at) < 500*time.Millisecond {
+		return clockCache.text
+	}
+	text := time.Now().Format("2006-01-02 15:04")
+	if resp, err := svc.GetClock(context.Background()); err == nil && resp != nil && resp.Now != "" {
+		if t, e := time.ParseInLocation("2006-01-02 15:04:05", resp.Now, time.Local); e == nil {
+			text = t.Format("2006-01-02 15:04")
+		}
+	}
+	clockCache.at, clockCache.text = time.Now(), text
+	return text
 }
 
 func homeOf(u *model.User) string {

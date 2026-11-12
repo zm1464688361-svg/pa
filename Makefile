@@ -28,16 +28,17 @@ fmt:
 	gofmt -l -w .
 
 test:
-	go test ./... -count=1
+	go test ./... -count=1 -p 1
 
 # 覆盖率（统计口径：以 ./internal/... 全包为分母，与 CI 门禁一致；门禁 ≥85%）
 cover:
 	-mkdir coverage
-	go test ./internal/... -count=1 -coverpkg=./internal/... -coverprofile=coverage/cover.out
+	go test ./internal/... -count=1 -p 1 -coverpkg=./internal/... -coverprofile=coverage/cover.out
 	go tool cover -func=coverage/cover.out | tail -1
 
+# 测试共用一个物理库，-p 1 串行执行各包，避免并行 AutoMigrate/清库互相干扰
 race:
-	go test ./internal/... -race -count=1
+	go test ./internal/... -race -count=1 -p 1
 
 seed:
 	go run ./cmd/seed
@@ -51,5 +52,14 @@ run-gateway:
 run-paysim:
 	go run ./cmd/paysim
 
+# 一次启动三个进程（Windows 下各自新窗口，便于直接用页面验收）
+run-all:
+	go build -o $(BIN)/service.exe ./cmd/service
+	go build -o $(BIN)/gateway.exe ./cmd/gateway
+	go build -o $(BIN)/paysim.exe ./cmd/paysim
+	start "service" /B $(BIN)/service.exe
+	start "gateway" /B $(BIN)/gateway.exe
+	start "paysim" /B $(BIN)/paysim.exe
+
 clean:
-	rm -rf $(BIN) coverage
+	-rm -rf $(BIN) coverage
