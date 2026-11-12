@@ -1,0 +1,59 @@
+name: ci
+
+on:
+  push:
+    branches: [zhou, main]
+  pull_request:
+    branches: [main, zhou]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: petshop_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot"
+          --health-interval=5s --health-timeout=3s --health-retries=20
+    env:
+      TEST_DB_DSN: root:root@tcp(127.0.0.1:3306)/petshop_test?charset=utf8mb4&parseTime=True&loc=Local
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+
+      - name: vet
+        run: go vet ./...
+
+      - name: build
+        run: go build ./...
+
+      - name: test with race
+        run: go test ./internal/... -race -count=1
+
+      - name: coverage (gate >= 85%)
+        run: |
+          go test ./internal/... -coverpkg=./internal/... -coverprofile=coverage/cover.out -count=1
+          total=$(go tool cover -func=coverage/cover.out | awk '/^total:/ {gsub("%","",$3); print $3}')
+          echo "total coverage: ${total}%"
+          awk -v t="$total" 'BEGIN { if (t+0 < 85) { print "FAIL: coverage " t "% < 85%"; exit 1 } }'
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build image (service)
+        run: docker build --build-arg TARGET=service -t pa-service .
+      - name: build image (gateway)
+        run: docker build --build-arg TARGET=gateway -t pa-gateway .
