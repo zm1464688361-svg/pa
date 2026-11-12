@@ -1,0 +1,851 @@
+{
+  "student": "zm1464688361-svg",
+  "question": "02",
+  "revision": "123b1956703a92b886d7421ebc810cd688e1827b",
+  "completion_score": "3.45",
+  "process_score": "0.70",
+  "raw_score": "4.15",
+  "raw_score_exact": "83/20",
+  "gate_cap": "7.90",
+  "gate_adjustment_exact": "0",
+  "final_score": "4.15",
+  "verdict": "不合格",
+  "evidence_provisional": true,
+  "counts": {
+    "pass": 5,
+    "partial": 15,
+    "fail": 9,
+    "unknown": 5,
+    "na": 0
+  },
+  "blockers": [
+    {
+      "id": "A1-01",
+      "category": "A1",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "时段创建/名额/教学时钟代码与单测存在（internal/clock 及 biz 测试通过），但未实际启动服务验证店长发布时段→过期关闭页面闭环，验证级别仅代码+单测。",
+      "evidence": [
+        "E-001",
+        "E-005"
+      ]
+    },
+    {
+      "id": "A1-02",
+      "category": "A1",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "选宠/互斥锁/不可预约判断逻辑在 biz 包实现且有单测通过，未做页面级实操与并发抢位实测。",
+      "evidence": [
+        "E-001",
+        "E-005"
+      ]
+    },
+    {
+      "id": "A1-03",
+      "category": "A1",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "paysim 模拟渠道与支付确认逻辑有实现及单测（paysim 85.0%），异常支付台账逻辑存在，但重复通知/迟到支付场景未端到端实测。",
+      "evidence": [
+        "E-001",
+        "E-005"
+      ]
+    },
+    {
+      "id": "A1-04",
+      "category": "A1",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "cancel_test.go 21KB 覆盖取消分支且全部通过，退款失败重试逻辑存在，但 2 小时边界与客服批准/拒绝未做真实页面演示。",
+      "evidence": [
+        "E-005"
+      ]
+    },
+    {
+      "id": "A1-05",
+      "category": "A1",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "核销→服务开始→完成顺序与幂等逻辑有代码及单测，跨门店/待处理取消拦截未实测。",
+      "evidence": [
+        "E-001",
+        "E-005"
+      ]
+    },
+    {
+      "id": "A1-06",
+      "category": "A1",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "未到店标记与店长日清统计代码存在，页面 html 就绪（12 个），未运行核验统计口径（已完成/取消/未到店/退款中分开）。",
+      "evidence": [
+        "E-001"
+      ]
+    },
+    {
+      "id": "A1-07",
+      "category": "A1",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "五组完整工作场景仅由单元测试部分覆盖，无端到端运行、无演示记录，验收级别不足。",
+      "evidence": [
+        "E-005",
+        "E-009"
+      ]
+    },
+    {
+      "id": "A2-01",
+      "category": "A2",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "GORM+MySQL AutoMigrate 与模型齐全，单测通过；但未做服务重启后数据可查的实测。",
+      "evidence": [
+        "E-005"
+      ]
+    },
+    {
+      "id": "A2-02",
+      "category": "A2",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "并发竞态测试文件存在且 go test 通过，但 -race 竞争检测在本地与 CI 均无成功执行记录（CI gofmt 失败后跳过）。",
+      "evidence": [
+        "E-005"
+      ]
+    },
+    {
+      "id": "A2-03",
+      "category": "A2",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "名额预扣/释放幂等逻辑有单测覆盖，金额口径（实收=已收款-已退款）未在运行数据中核验。",
+      "evidence": [
+        "E-005"
+      ]
+    },
+    {
+      "id": "A2-04",
+      "category": "A2",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "session/sign 包有角色会话与签名实现及测试，越权场景未实测。",
+      "evidence": [
+        "E-005"
+      ]
+    },
+    {
+      "id": "A2-05",
+      "category": "A2",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "internal/clock 教学时钟实现且单测通过，2 小时/5 分钟边界未做可配置演示验证。",
+      "evidence": [
+        "E-005"
+      ]
+    },
+    {
+      "id": "A3-02",
+      "category": "A3",
+      "status": "fail",
+      "label": "必做要求未完全通过",
+      "reason": "整体及核心包覆盖率门禁未达标：本地复跑 biz 84.9%<85%、repo（自编数据库访问）0.0%；CI 因 gofmt 失败 coverage 步骤被跳过，85.6% 声明无实际产出支撑。",
+      "evidence": [
+        "E-004",
+        "E-005"
+      ]
+    },
+    {
+      "id": "A3-03",
+      "category": "A3",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "本地 gofmt 无输出、go build 通过；但 CI 在 Linux 下 gofmt 失败（疑行尾差异），vet 被跳过，-race 无任何成功执行证据。",
+      "evidence": [
+        "E-004",
+        "E-006"
+      ]
+    },
+    {
+      "id": "A3-04",
+      "category": "A3",
+      "status": "fail",
+      "label": "必做要求未完全通过",
+      "reason": "覆盖率原始 profile 未产出：CI upload-artifact 步骤因前置失败被跳过，仓库与本地均无 cover.out 可读报告。",
+      "evidence": [
+        "E-004"
+      ]
+    },
+    {
+      "id": "A4-02",
+      "category": "A4",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "ci.yml 含 gofmt/vet/race/覆盖率门禁/镜像构建，但无部署、健康检查、业务冒烟步骤，不满足流水线最低要求。",
+      "evidence": [
+        "E-004"
+      ]
+    },
+    {
+      "id": "A4-03",
+      "category": "A4",
+      "status": "fail",
+      "label": "必做要求未完全通过",
+      "reason": "无实际部署：PR #1 处于 open、CI 失败未合并，main 停留在初始化提交 e944712，无部署地址、流水线部署记录与制品版本对应。",
+      "evidence": [
+        "E-003",
+        "E-004"
+      ]
+    },
+    {
+      "id": "A4-04",
+      "category": "A4",
+      "status": "unknown",
+      "label": "待补证，尚不能确认合规",
+      "reason": "工作区与仓库内均无讲解效果视频、带时间点讲解目录及班级群提交凭据；无法确认是否已完成，列待补证。",
+      "evidence": [
+        "E-009"
+      ]
+    },
+    {
+      "id": "A4-05",
+      "category": "A4",
+      "status": "fail",
+      "label": "必做要求未完全通过",
+      "reason": "未部署即无上线冒烟结果，亦无首次部署失败撤销/回退说明。",
+      "evidence": [
+        "E-004"
+      ]
+    },
+    {
+      "id": "B1-02",
+      "category": "B1",
+      "status": "unknown",
+      "label": "待补证，尚不能确认合规",
+      "reason": "无独立测试 Agent、验收 Agent 会话导出或验收报告，无法确认测试/验收与开发上下文分离，列待补证。",
+      "evidence": [
+        "E-009"
+      ]
+    },
+    {
+      "id": "B1-03",
+      "category": "B1",
+      "status": "unknown",
+      "label": "待补证，尚不能确认合规",
+      "reason": "缺少会话时间线与结构化事件清单，仅能以 git 提交时间（单日集中）粗略推断顺序，缺陷修复循环无从核查。",
+      "evidence": [
+        "E-009"
+      ]
+    },
+    {
+      "id": "B2-03",
+      "category": "B2",
+      "status": "unknown",
+      "label": "待补证，尚不能确认合规",
+      "reason": "无 Markdown 会话导出、无结构化事件清单（JSON/JSONL），提示词→AI 行动→结果链不可追溯，列待补证。",
+      "evidence": [
+        "E-009"
+      ]
+    },
+    {
+      "id": "B2-04",
+      "category": "B2",
+      "status": "unknown",
+      "label": "待补证，尚不能确认合规",
+      "reason": "未找到一页 AI 使用说明（各阶段分工、学生审核内容、纠错记录）。",
+      "evidence": [
+        "E-009"
+      ]
+    },
+    {
+      "id": "B3-01",
+      "category": "B3",
+      "status": "fail",
+      "label": "必做要求未完全通过",
+      "reason": "全仓检索未发现任何自编业务专项 Skill 或验收检查 Skill 文件，仅存在审计用 student-project-audit 技能（非学生交付物）。",
+      "evidence": [
+        "E-009"
+      ]
+    },
+    {
+      "id": "B3-02",
+      "category": "B3",
+      "status": "fail",
+      "label": "必做要求未完全通过",
+      "reason": "无 skill-usage.md，无任何 Skill 实际调用记录。",
+      "evidence": [
+        "E-009"
+      ]
+    },
+    {
+      "id": "B4-01",
+      "category": "B4",
+      "status": "fail",
+      "label": "必做要求未完全通过",
+      "reason": "无 GitHub MCP 创建仓库记录：MCP 调用全程返回认证失败，仓库经 REST API/网页手动创建（含 past、pa 两个仓库），不符合『不得用手工创建、CLI 创建记录替代 MCP 创建证据』。",
+      "evidence": [
+        "E-012"
+      ]
+    },
+    {
+      "id": "B4-02",
+      "category": "B4",
+      "status": "partial",
+      "label": "必做要求未完全通过",
+      "reason": "业务在 zhou 开发分支推进且 feat/test 提交格式合规；但首个提交 e944712 使用规范外类型 chore，docs 提交无版本号（允许）整体可接受，记部分合规。",
+      "evidence": [
+        "E-001",
+        "E-010"
+      ]
+    },
+    {
+      "id": "B4-03",
+      "category": "B4",
+      "status": "fail",
+      "label": "必做要求未完全通过",
+      "reason": "meegle 工作项核验未完成（CONFIG_ERROR 缺少飞书插件凭证），学生如实记录未伪造，但按题面规定该 feat 提交在核验完成前不合规。",
+      "evidence": [
+        "E-008"
+      ]
+    },
+    {
+      "id": "B4-04",
+      "category": "B4",
+      "status": "fail",
+      "label": "必做要求未完全通过",
+      "reason": "PR #1 已创建但 CI 失败未合并；main 无分支保护（protected:false），未配置禁止直推/删除/强推门禁，合并与部署门禁未闭环。",
+      "evidence": [
+        "E-002",
+        "E-003",
+        "E-004"
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "category": "A1",
+      "max": "3.00",
+      "applicable_weight": "3.00",
+      "score": "1.50",
+      "score_exact": "3/2",
+      "checks": [
+        {
+          "id": "A1-01",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "2/5",
+          "points_exact": "1/5",
+          "loss_exact": "1/5",
+          "evidence": [
+            "E-001",
+            "E-005"
+          ],
+          "reason": "时段创建/名额/教学时钟代码与单测存在（internal/clock 及 biz 测试通过），但未实际启动服务验证店长发布时段→过期关闭页面闭环，验证级别仅代码+单测。"
+        },
+        {
+          "id": "A1-02",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "2/5",
+          "points_exact": "1/5",
+          "loss_exact": "1/5",
+          "evidence": [
+            "E-001",
+            "E-005"
+          ],
+          "reason": "选宠/互斥锁/不可预约判断逻辑在 biz 包实现且有单测通过，未做页面级实操与并发抢位实测。"
+        },
+        {
+          "id": "A1-03",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "2/5",
+          "points_exact": "1/5",
+          "loss_exact": "1/5",
+          "evidence": [
+            "E-001",
+            "E-005"
+          ],
+          "reason": "paysim 模拟渠道与支付确认逻辑有实现及单测（paysim 85.0%），异常支付台账逻辑存在，但重复通知/迟到支付场景未端到端实测。"
+        },
+        {
+          "id": "A1-04",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "2/5",
+          "points_exact": "1/5",
+          "loss_exact": "1/5",
+          "evidence": [
+            "E-005"
+          ],
+          "reason": "cancel_test.go 21KB 覆盖取消分支且全部通过，退款失败重试逻辑存在，但 2 小时边界与客服批准/拒绝未做真实页面演示。"
+        },
+        {
+          "id": "A1-05",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "2/5",
+          "points_exact": "1/5",
+          "loss_exact": "1/5",
+          "evidence": [
+            "E-001",
+            "E-005"
+          ],
+          "reason": "核销→服务开始→完成顺序与幂等逻辑有代码及单测，跨门店/待处理取消拦截未实测。"
+        },
+        {
+          "id": "A1-06",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "2/5",
+          "points_exact": "1/5",
+          "loss_exact": "1/5",
+          "evidence": [
+            "E-001"
+          ],
+          "reason": "未到店标记与店长日清统计代码存在，页面 html 就绪（12 个），未运行核验统计口径（已完成/取消/未到店/退款中分开）。"
+        },
+        {
+          "id": "A1-07",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "3/5",
+          "points_exact": "3/10",
+          "loss_exact": "3/10",
+          "evidence": [
+            "E-005",
+            "E-009"
+          ],
+          "reason": "五组完整工作场景仅由单元测试部分覆盖，无端到端运行、无演示记录，验收级别不足。"
+        }
+      ]
+    },
+    {
+      "category": "A2",
+      "max": "1.80",
+      "applicable_weight": "1.80",
+      "score": "0.90",
+      "score_exact": "9/10",
+      "checks": [
+        {
+          "id": "A2-01",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "2/5",
+          "points_exact": "1/5",
+          "loss_exact": "1/5",
+          "evidence": [
+            "E-005"
+          ],
+          "reason": "GORM+MySQL AutoMigrate 与模型齐全，单测通过；但未做服务重启后数据可查的实测。"
+        },
+        {
+          "id": "A2-02",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "7/20",
+          "points_exact": "7/40",
+          "loss_exact": "7/40",
+          "evidence": [
+            "E-005"
+          ],
+          "reason": "并发竞态测试文件存在且 go test 通过，但 -race 竞争检测在本地与 CI 均无成功执行记录（CI gofmt 失败后跳过）。"
+        },
+        {
+          "id": "A2-03",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "7/20",
+          "points_exact": "7/40",
+          "loss_exact": "7/40",
+          "evidence": [
+            "E-005"
+          ],
+          "reason": "名额预扣/释放幂等逻辑有单测覆盖，金额口径（实收=已收款-已退款）未在运行数据中核验。"
+        },
+        {
+          "id": "A2-04",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "7/20",
+          "points_exact": "7/40",
+          "loss_exact": "7/40",
+          "evidence": [
+            "E-005"
+          ],
+          "reason": "session/sign 包有角色会话与签名实现及测试，越权场景未实测。"
+        },
+        {
+          "id": "A2-05",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "7/20",
+          "points_exact": "7/40",
+          "loss_exact": "7/40",
+          "evidence": [
+            "E-005"
+          ],
+          "reason": "internal/clock 教学时钟实现且单测通过，2 小时/5 分钟边界未做可配置演示验证。"
+        }
+      ]
+    },
+    {
+      "category": "A3",
+      "max": "1.70",
+      "applicable_weight": "1.70",
+      "score": "0.60",
+      "score_exact": "3/5",
+      "checks": [
+        {
+          "id": "A3-01",
+          "status": "pass",
+          "mandatory": true,
+          "factor": "1",
+          "normalized_max_exact": "2/5",
+          "points_exact": "2/5",
+          "loss_exact": "0",
+          "evidence": [
+            "E-005"
+          ],
+          "reason": "11 个测试文件（含 biz/cancel/coverage 共 46KB）由检查者独立复跑全部 ok，断言真实存在。"
+        },
+        {
+          "id": "A3-02",
+          "status": "fail",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "1/2",
+          "points_exact": "0",
+          "loss_exact": "1/2",
+          "evidence": [
+            "E-004",
+            "E-005"
+          ],
+          "reason": "整体及核心包覆盖率门禁未达标：本地复跑 biz 84.9%<85%、repo（自编数据库访问）0.0%；CI 因 gofmt 失败 coverage 步骤被跳过，85.6% 声明无实际产出支撑。"
+        },
+        {
+          "id": "A3-03",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "2/5",
+          "points_exact": "1/5",
+          "loss_exact": "1/5",
+          "evidence": [
+            "E-004",
+            "E-006"
+          ],
+          "reason": "本地 gofmt 无输出、go build 通过；但 CI 在 Linux 下 gofmt 失败（疑行尾差异），vet 被跳过，-race 无任何成功执行证据。"
+        },
+        {
+          "id": "A3-04",
+          "status": "fail",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "2/5",
+          "points_exact": "0",
+          "loss_exact": "2/5",
+          "evidence": [
+            "E-004"
+          ],
+          "reason": "覆盖率原始 profile 未产出：CI upload-artifact 步骤因前置失败被跳过，仓库与本地均无 cover.out 可读报告。"
+        }
+      ]
+    },
+    {
+      "category": "A4",
+      "max": "1.50",
+      "applicable_weight": "1.50",
+      "score": "0.45",
+      "score_exact": "9/20",
+      "checks": [
+        {
+          "id": "A4-01",
+          "status": "pass",
+          "mandatory": true,
+          "factor": "1",
+          "normalized_max_exact": "3/10",
+          "points_exact": "3/10",
+          "loss_exact": "0",
+          "evidence": [
+            "E-006"
+          ],
+          "reason": "AGENTS.md 记录的 make build/test 等命令经检查者本机验证可执行（build/gofmt 退出码 0），seed 演示数据程序存在。"
+        },
+        {
+          "id": "A4-02",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "3/10",
+          "points_exact": "3/20",
+          "loss_exact": "3/20",
+          "evidence": [
+            "E-004"
+          ],
+          "reason": "ci.yml 含 gofmt/vet/race/覆盖率门禁/镜像构建，但无部署、健康检查、业务冒烟步骤，不满足流水线最低要求。"
+        },
+        {
+          "id": "A4-03",
+          "status": "fail",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "2/5",
+          "points_exact": "0",
+          "loss_exact": "2/5",
+          "evidence": [
+            "E-003",
+            "E-004"
+          ],
+          "reason": "无实际部署：PR #1 处于 open、CI 失败未合并，main 停留在初始化提交 e944712，无部署地址、流水线部署记录与制品版本对应。"
+        },
+        {
+          "id": "A4-04",
+          "status": "unknown",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "3/10",
+          "points_exact": "0",
+          "loss_exact": "3/10",
+          "evidence": [
+            "E-009"
+          ],
+          "reason": "工作区与仓库内均无讲解效果视频、带时间点讲解目录及班级群提交凭据；无法确认是否已完成，列待补证。"
+        },
+        {
+          "id": "A4-05",
+          "status": "fail",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "1/5",
+          "points_exact": "0",
+          "loss_exact": "1/5",
+          "evidence": [
+            "E-004"
+          ],
+          "reason": "未部署即无上线冒烟结果，亦无首次部署失败撤销/回退说明。"
+        }
+      ]
+    },
+    {
+      "category": "B1",
+      "max": "0.60",
+      "applicable_weight": "0.60",
+      "score": "0.20",
+      "score_exact": "1/5",
+      "checks": [
+        {
+          "id": "B1-01",
+          "status": "pass",
+          "mandatory": true,
+          "factor": "1",
+          "normalized_max_exact": "1/5",
+          "points_exact": "1/5",
+          "loss_exact": "0",
+          "evidence": [
+            "E-011"
+          ],
+          "reason": "docs/requirements.md、prototype.md、plan.md 与 11 张原型图齐全，并有独立 docs 提交（01f30bc/2b68f5c/a9536df）先于 feat。"
+        },
+        {
+          "id": "B1-02",
+          "status": "unknown",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "1/4",
+          "points_exact": "0",
+          "loss_exact": "1/4",
+          "evidence": [
+            "E-009"
+          ],
+          "reason": "无独立测试 Agent、验收 Agent 会话导出或验收报告，无法确认测试/验收与开发上下文分离，列待补证。"
+        },
+        {
+          "id": "B1-03",
+          "status": "unknown",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "3/20",
+          "points_exact": "0",
+          "loss_exact": "3/20",
+          "evidence": [
+            "E-009"
+          ],
+          "reason": "缺少会话时间线与结构化事件清单，仅能以 git 提交时间（单日集中）粗略推断顺序，缺陷修复循环无从核查。"
+        }
+      ]
+    },
+    {
+      "category": "B2",
+      "max": "0.80",
+      "applicable_weight": "0.80",
+      "score": "0.45",
+      "score_exact": "9/20",
+      "checks": [
+        {
+          "id": "B2-01",
+          "status": "pass",
+          "mandatory": true,
+          "factor": "1",
+          "normalized_max_exact": "1/4",
+          "points_exact": "1/4",
+          "loss_exact": "0",
+          "evidence": [
+            "E-007"
+          ],
+          "reason": "AGENTS.md 存在于首个提交 e944712，早于业务提交 99650c5，满足业务开发前编写并入库。"
+        },
+        {
+          "id": "B2-02",
+          "status": "pass",
+          "mandatory": true,
+          "factor": "1",
+          "normalized_max_exact": "1/5",
+          "points_exact": "1/5",
+          "loss_exact": "0",
+          "evidence": [
+            "E-007"
+          ],
+          "reason": "约束针对题目 02：四角色权限矩阵、时段/预约硬约束、营收口径、提交规范与 meegle 核验、覆盖率要求、禁止事项齐全，非通用模板。"
+        },
+        {
+          "id": "B2-03",
+          "status": "unknown",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "1/5",
+          "points_exact": "0",
+          "loss_exact": "1/5",
+          "evidence": [
+            "E-009"
+          ],
+          "reason": "无 Markdown 会话导出、无结构化事件清单（JSON/JSONL），提示词→AI 行动→结果链不可追溯，列待补证。"
+        },
+        {
+          "id": "B2-04",
+          "status": "unknown",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "3/20",
+          "points_exact": "0",
+          "loss_exact": "3/20",
+          "evidence": [
+            "E-009"
+          ],
+          "reason": "未找到一页 AI 使用说明（各阶段分工、学生审核内容、纠错记录）。"
+        }
+      ]
+    },
+    {
+      "category": "B3",
+      "max": "0.30",
+      "applicable_weight": "0.30",
+      "score": "0.00",
+      "score_exact": "0",
+      "checks": [
+        {
+          "id": "B3-01",
+          "status": "fail",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "3/20",
+          "points_exact": "0",
+          "loss_exact": "3/20",
+          "evidence": [
+            "E-009"
+          ],
+          "reason": "全仓检索未发现任何自编业务专项 Skill 或验收检查 Skill 文件，仅存在审计用 student-project-audit 技能（非学生交付物）。"
+        },
+        {
+          "id": "B3-02",
+          "status": "fail",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "3/20",
+          "points_exact": "0",
+          "loss_exact": "3/20",
+          "evidence": [
+            "E-009"
+          ],
+          "reason": "无 skill-usage.md，无任何 Skill 实际调用记录。"
+        }
+      ]
+    },
+    {
+      "category": "B4",
+      "max": "0.30",
+      "applicable_weight": "0.30",
+      "score": "0.05",
+      "score_exact": "1/20",
+      "checks": [
+        {
+          "id": "B4-01",
+          "status": "fail",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "1/10",
+          "points_exact": "0",
+          "loss_exact": "1/10",
+          "evidence": [
+            "E-012"
+          ],
+          "reason": "无 GitHub MCP 创建仓库记录：MCP 调用全程返回认证失败，仓库经 REST API/网页手动创建（含 past、pa 两个仓库），不符合『不得用手工创建、CLI 创建记录替代 MCP 创建证据』。"
+        },
+        {
+          "id": "B4-02",
+          "status": "partial",
+          "mandatory": true,
+          "factor": "0.5",
+          "normalized_max_exact": "1/10",
+          "points_exact": "1/20",
+          "loss_exact": "1/20",
+          "evidence": [
+            "E-001",
+            "E-010"
+          ],
+          "reason": "业务在 zhou 开发分支推进且 feat/test 提交格式合规；但首个提交 e944712 使用规范外类型 chore，docs 提交无版本号（允许）整体可接受，记部分合规。"
+        },
+        {
+          "id": "B4-03",
+          "status": "fail",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "1/20",
+          "points_exact": "0",
+          "loss_exact": "1/20",
+          "evidence": [
+            "E-008"
+          ],
+          "reason": "meegle 工作项核验未完成（CONFIG_ERROR 缺少飞书插件凭证），学生如实记录未伪造，但按题面规定该 feat 提交在核验完成前不合规。"
+        },
+        {
+          "id": "B4-04",
+          "status": "fail",
+          "mandatory": true,
+          "factor": "0",
+          "normalized_max_exact": "1/20",
+          "points_exact": "0",
+          "loss_exact": "1/20",
+          "evidence": [
+            "E-002",
+            "E-003",
+            "E-004"
+          ],
+          "reason": "PR #1 已创建但 CI 失败未合并；main 无分支保护（protected:false），未配置禁止直推/删除/强推门禁，合并与部署门禁未闭环。"
+        }
+      ]
+    }
+  ]
+}

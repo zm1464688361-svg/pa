@@ -44,6 +44,7 @@ jobs:
 
       - name: coverage (gate >= 85%)
         run: |
+          mkdir -p coverage
           go test ./internal/... -coverpkg=./internal/... -coverprofile=coverage/cover.out -count=1
           total=$(go tool cover -func=coverage/cover.out | awk '/^total:/ {gsub("%","",$3); print $3}')
           echo "total coverage: ${total}%"
