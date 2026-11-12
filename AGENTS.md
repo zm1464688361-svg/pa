@@ -8,15 +8,34 @@
 核心链路：店长发布可预约时段 → 主人选宠提交预约并支付 → 前台核销 → 登记服务开始/完成 → 统计营收。
 技术栈尚未确定；确定后请在本节补充安装、构建、测试命令（命令必须真实可执行后再写入）。
 
-## 安装 / 构建 / 测试（待定）
+## 安装 / 构建 / 测试（已确定）
 
-- 安装、构建、测试命令：**待技术栈与依赖管理文件确定后补充**。当前仓库为空，禁止臆造或执行不存在的命令。
-- 确定技术栈后，必须先在仓库中真实验证命令可执行，再写入本节，并保持命令可直接复制运行。
+技术栈：Go 1.27 + Hertz（HTTP 网关，端口 8081）+ Kitex（RPC，端口 9001）+ GORM + MySQL 8.0（库名 `petshop`）+ 模拟支付渠道 pay_sim（端口 9002）。以下命令均已在本机（Windows）真实验证可执行。
 
-## 代码风格与提交规范（待定）
+```bash
+# 前置：MySQL 中创建库（首次）
+mysql -uroot -p -e "CREATE DATABASE IF NOT EXISTS petshop CHARACTER SET utf8mb4"
+# 前置：复制 config.example.yaml 为 config.local.yaml 并填入 db_dsn（该文件不入库）
 
-- 代码风格约定：待技术栈确定后，按所选语言的官方风格指南与格式化工具（如 prettier / ruff / gofmt）补充，并同步加入 lint 配置。
-- 提交信息使用简洁祈使句，一个提交只做一件事；禁止提交密钥、内网地址等敏感信息，敏感配置一律通过环境变量或本地配置文件（加入 `.gitignore`）获取。
+make build      # 编译 service/gateway/paysim/seed 到 bin/
+make seed       # 初始化演示数据（幂等可重复执行）
+make test       # 全部单元测试
+make cover      # 覆盖率（核心包门禁 ≥85%，输出 coverage/cover.out）
+make race       # 并发/竞争检测
+make vet        # go vet
+make run-all    # 本地起服务（或分别 go run ./cmd/{service,gateway,paysim}）
+```
+
+- 服务启动顺序：MySQL → `service`(9001) → `gateway`(8081) → `paysim`(9002)。
+- 页面入口：http://127.0.0.1:8081/login （预置账号：owner/user1/user2/user3/front/support）。
+- 模拟支付渠道管理页：http://127.0.0.1:9002/
+- 禁止提交密钥：数据库 DSN 通过环境变量 `DB_DSN` 或 `config.local.yaml` 提供。
+
+## 代码风格与提交规范（已确定）
+
+- 代码风格：Go 官方 gofmt；提交前必须 `gofmt -l .` 无输出、`go vet ./...` 通过。
+- 提交信息执行 `commit-convention.md`：`[类型] [版本号] [需求/Bug编号] 中文描述`；feat/fix 必须关联真实飞书工作项编号（项目 `r17te9`），提交前用 `meegle workitem get --work-item-id <编号> --project-key r17te9` 核验并保留输出。
+- 一个提交只做一件事；禁止提交密钥、内网地址等敏感信息，敏感配置一律通过环境变量或本地配置文件（加入 `.gitignore`）获取。
 
 ## 角色与权限矩阵
 
