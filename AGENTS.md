@@ -24,7 +24,10 @@ internal/repo       连接/迁移（MySQL 命名锁串行化）/审计写入
 internal/{config,session,sign,errs,paysim}
 idl/petshop.thrift  唯一 IDL 源；改后执行 `kitex -module github.com/zm1464688361-svg/pa idl/petshop.thrift`
 kitex_gen/          生成代码，禁止手改
-scripts/e2e.ps1     四角色端到端验收脚本（结果写入 docs/verification.md）
+scripts/e2e.ps1     四角色端到端验收脚本（结果写入 docs/verification.md；口令从 MYSQL_PWD/config.local.yaml 读取）
+scripts/smoke.sh    上线冒烟脚本（登录→发布时段→预约→名额扣减→教学时钟），供 deploy job 调用
+tools/invariantcheck 业务不变量核对（名额一致性、未到店/退款名额标记），`go run ./tools/invariantcheck`
+skills/             自编 Skill：biz-consistency-check（业务不变量）、acceptance-check（交付验收）
 ```
 
 ```bash
@@ -35,7 +38,7 @@ mysql -uroot -p -e "CREATE DATABASE IF NOT EXISTS petshop CHARACTER SET utf8mb4"
 make build      # 编译 service/gateway/paysim/seed 到 bin/
 make seed       # 初始化演示数据（按 username / start_time 去重，可重复执行）
 make test       # 全部单元测试（-p 1 串行，见下方说明）
-make cover      # 覆盖率（口径=./internal/... 全包，门禁 ≥85%，输出 coverage/cover.out）
+make cover      # 覆盖率（口径=./internal/... 全包；门禁：整体 ≥85% 且 biz/repo 等核心包分别 ≥85%；输出 coverage/cover.out）
 make race       # 并发/竞争检测（需 CGO，本机无 gcc 时由 CI 执行）
 make vet        # go vet
 make run-all    # Windows：编译并后台起 service/gateway/paysim 三进程
@@ -45,7 +48,7 @@ make run-all    # Windows：编译并后台起 service/gateway/paysim 三进程
 - 页面入口：http://127.0.0.1:8081/login （预置账号：owner/user1/user2/user3/front/support，密码见 `cmd/seed`）。
 - 模拟支付渠道管理页：http://127.0.0.1:9002/
 - 教学时钟：页面 http://127.0.0.1:8081/clock 可设置偏移秒数（正=未来）；偏移持久化在 `clock_offsets.offset_sec`，所有业务时间判断与页面页脚展示均走该时钟，禁止在业务代码里直接调用 `time.Now()`。
-- 禁止提交密钥：数据库 DSN 通过环境变量 `DB_DSN` / `TEST_DB_DSN` 或 `config.local.yaml` 提供。
+- 禁止提交密钥：数据库 DSN 通过环境变量 `DB_DSN` / `TEST_DB_DSN` 或 `config.local.yaml` 提供；脚本内的 `mysql` 调用只能读 `MYSQL_PWD`/`MYSQL_USER`，**任何口令、令牌不得写入被跟踪文件**。
 
 ### 骨架验证记录（2026-11-12 本机 Windows 实测）
 
@@ -57,7 +60,7 @@ make run-all    # Windows：编译并后台起 service/gateway/paysim 三进程
 | `make vet` | 无输出，退出码 0 |
 | `gofmt -l .` | 无输出 |
 | `make test` | 8 个包全部 `ok`（biz 14.2s） |
-| `make cover` | `total: 85.5%`（≥85% 门禁） |
+| `make cover` | `total: 85.5%`（首版）；补异常分支用例后 `biz 87.2%`、`repo 88.9%`，整体约 87.7% |
 | `make seed`（连续两次） | 演示时段按开始时间去重，不重复插入（users=6 pets=3） |
 | 启动三进程 | 8081/9001/9002 均监听；`/login` 200；`/slots` 渲染出次日 14:00 时段与名额 |
 | `POST /clock offset_sec=7200` | 页脚与页面时间 +2h，`clock_offsets.offset_sec=7200`；置 0 复位 |
@@ -67,6 +70,25 @@ make run-all    # Windows：编译并后台起 service/gateway/paysim 三进程
 
 - 本机无 CGO 工具链，`make race` 无法本地执行；等价本地验证为 `make test`，竞态检测以 CI 结果为准。
 - 各包测试共用同一物理库 `petshop_test`，因此 Makefile 与 CI 的测试步骤统一加 `-p 1` 串行，避免并行 AutoMigrate（1050）与清库互相干扰。
+
+### 测试与覆盖率门禁
+
+- 覆盖率口径 = `./internal/...` 全包；**整体 ≥85%，且 `biz`、`repo` 等核心业务包分别 ≥85%**，只报整体不报逐包视为不达标。
+- 禁止通过删除失败测试、弱化断言、跳过关键路径或排除自编生产代码（尤其 `repo` 的数据库访问）达标。
+- 新增异常分支用例后必须复跑 `go test ./internal/... -race -count=1 -p 1`；并发相关逻辑必须保留可重复执行的并发用例。
+- 覆盖率原件由 CI 以 `coverage-profile` 制品上传，可按 run 与提交哈希追溯。
+
+### 自动部署与上线冒烟
+
+- CI `deploy` job 仅在 `push` 到 `main` 且 `check`、`docker` 均通过时执行：compose 构建 → `up -d` → seed → 健康检查（8081/9001/9002）→ `scripts/smoke.sh` 业务冒烟 → 上传 `deploy-record` 制品 → 清理。
+- 冒烟失败即发布失败；回退与首次部署撤销步骤见 `docs/deploy.md`。
+- 部署版本必须等于 `main` 合并提交，不得用开发分支的绿色报告代替主分支部署证据。
+
+### 自编 Skill
+
+- `skills/biz-consistency-check/SKILL.md`：业务不变量检查（名额一致性、幂等、时钟、越权）；动态校验入口 `go run ./tools/invariantcheck`。
+- `skills/acceptance-check/SKILL.md`：交付前逐项验收（覆盖率、race、端到端、部署、规范、过程材料）。
+- 调用记录与"发现问题→修正→复检"过程写入 `docs/skill-usage.md`，不得只提交 Skill 文件。
 
 ## 代码风格与提交规范（已确定）
 
