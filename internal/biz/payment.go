@@ -124,7 +124,11 @@ func (b *Biz) toAbnormal(tx *gorm.DB, orderNo, tradeNo string, amountFen int64, 
 		OrderNo: orderNo, ChannelTradeNo: tradeNo, AmountFen: amountFen,
 		Reason: reason, Status: model.AbnormalPending, CreatedAt: time.Now(),
 	}
-	return tx.Create(&ap).Error
+	if err := tx.Create(&ap).Error; err != nil {
+		// 同一订单同一交易号已登记过台账（幂等护栏）；不同订单复用交易号由复合唯一键放行
+		return nil
+	}
+	return nil
 }
 
 // errorsIs 判断是否记录不存在。

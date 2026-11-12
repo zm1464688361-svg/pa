@@ -181,10 +181,12 @@ type CancelRequest struct {
 }
 
 // AbnormalPayment 异常支付台账（永久保存）。
+// 幂等键 = (订单号, 交易号)：模拟渠道进程重启后交易号会复用（如 T100000），
+// 不能按全局 channel_trade_no 唯一约束，否则渠道重启后关单订单的迟到支付无法登记台账。
 type AbnormalPayment struct {
 	ID             int64     `gorm:"primaryKey" json:"id"`
-	OrderNo        string    `gorm:"size:32;index" json:"orderNo"`
-	ChannelTradeNo string    `gorm:"size:64;uniqueIndex" json:"channelTradeNo"`
+	OrderNo        string    `gorm:"size:32;uniqueIndex:idx_abnormal_order_trade;index" json:"orderNo"`
+	ChannelTradeNo string    `gorm:"size:64;uniqueIndex:idx_abnormal_order_trade;index" json:"channelTradeNo"`
 	AmountFen      int64     `json:"amountFen"`
 	Reason         string    `gorm:"size:64" json:"reason"` // closed_order_paid / duplicate_payment
 	Status         string    `gorm:"size:16" json:"status"`

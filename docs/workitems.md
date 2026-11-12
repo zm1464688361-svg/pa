@@ -62,7 +62,7 @@ CI 失败修复过程（保留真实循环记录）：
 - [x] PR #4：工程骨架修复与 AGENTS.md 实测更新（合并提交 `7713bc8`）
 - [ ] 讲解效果视频录制与群提交（学生本人完成，登记时间点）
 - [x] 覆盖率逐包达标（biz 87.2%、repo 88.9%，补 `coverage_gap_test.go`/`repo_gap_test.go`）
-- [x] 明文口令从 `scripts/e2e.ps1` 移除（改读 `MYSQL_PWD`/`config.local.yaml`）；**口令轮换待学生执行**
+- [x] 明文口令从 `scripts/e2e.ps1` 移除（改读 `MYSQL_PWD`/`config.local.yaml`）；口令轮换已执行（见缺陷-11）
 - [x] CI 增加 `deploy` job + `scripts/smoke.sh`（compose 部署、健康检查、业务冒烟、制品上传）
 - [x] `deploy` job 首次在 `main` 真实运行：PR #6 合并提交 `086f961` 上 check/docker/**deploy 全绿**（compose 部署 + 健康检查 + smoke.sh 业务冒烟 + deploy-record 制品），运行链接 `https://github.com/zm1464688361-svg/pa/actions/runs/43203449605`
 - [ ] 教学验收环境地址确认（当前部署到 runner 本地，无公网验收地址）
@@ -84,6 +84,8 @@ CI 失败修复过程（保留真实循环记录）：
 | 缺陷-7 | 复检：敏感信息扫描 | `scripts/e2e.ps1:14` 内置 MySQL root 明文口令并已合入 main | 本轮工作区（改读 `MYSQL_PWD`/`config.local.yaml`） | 待提交/合并；口令轮换待执行 |
 | 缺陷-8 | 复检：流水线核对 | `ci.yml` 只有 check/docker，无部署、健康检查与业务冒烟，无法证明"自动部署上线" | 本轮工作区（新增 `deploy` job + `scripts/smoke.sh`） | 待提交/合并 + 首次运行 |
 | 缺陷-9 | 审计独立复跑端到端（paysim 重启场景） | 支付通知幂等键仅用全局 `notify_id`：模拟渠道进程重启后通知号（如 N1-1）复用，新订单支付回调被静默判"重复通知"（返回 code 0），预约永久停留待支付——渠道重启后全部收款失效 | `76555e6`（幂等键改为 订单号+通知号 复合唯一，迁移兼容清理旧全局索引，补跨订单复用回归测试） | 已合并 `086f961`；paysim 全新启动（计数器归 1）复跑 e2e **16/16 通过**，修复得证 |
+| 缺陷-10 | 审计复跑端到端（脏库 + paysim 重启） | 异常支付台账 `abnormal_payments.channel_trade_no` 全局唯一索引 + 渠道重启后交易号（如 T100000）复用 → 关单订单的迟到支付登记台账时报 1062 冲突（响应 code 5000），台账缺失且无支付流水——渠道重启后异常支付全部漏登记。另发现 e2e 脚本两处脚手架问题：dsn 带引号解析失败、NewSlot `LIMIT 1` 无排序在脏库复跑时命中历史同时段 | 本轮（台账幂等键改 订单号+交易号 复合唯一 + 登记幂等护栏 + 迁移清理旧索引 + 回归测试；脚本正则兼容引号、NewSlot 按 id 倒序取新建时段） | 待提交/合并复验 |
+| 缺陷-11 | 口令轮换执行记录 | 本机 MySQL root 旧口令已在多轮测试与聊天记录中暴露 | 已执行 `ALTER USER root@localhost`，`config.local.yaml`（不入库）同步更新，服务重启 + e2e 16/16 复验通过 | 已完成（口令仅存本机不入库） |
 
 > 说明：按 `commit-convention.md`，`fix` 必须关联真实 Bug 编号；上述缺陷尚未在飞书项目登记 Bug 单（本机无 meegle 凭证），故修复提交使用 `opt` 类型并在 PR 描述中写明缺陷详情，取得凭证后补登记 Bug 并回填编号。
 

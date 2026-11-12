@@ -148,6 +148,46 @@ func TestNotifyIDReuseAcrossOrders(t *testing.T) {
 	}
 }
 
+// 渠道重启后交易号复用：不同订单的关单迟到支付必须各自入异常台账（缺陷-10 回归）；
+// 同一订单同一交易号重复通知只登记一次。
+func TestAbnormalTradeNoReuseAcrossOrders(t *testing.T) {
+	b := newBiz(t)
+	u := mkUser(t, b, "user1", "pet_owner", 0)
+	pet := mkPet(t, b, u.ID, "豆包")
+	start := b.Clock.Now().Add(26 * time.Hour)
+	slot := mkSlot(t, b, start, start.Add(time.Hour), 3)
+	// 订单 A：关单后迟到支付，交易号 T900
+	apA := book(t, b, u, slot.ID, pet.ID)
+	_, _ = b.CancelUnpaid(context.Background(), u, apA.ID)
+	if _, err := payNotify(b, "AX1", apA.OrderNo, "T900", 9900, "success"); err != nil {
+		t.Fatalf("关单订单迟到支付应受理: %v", err)
+	}
+	var nA int64
+	b.DB.Model(&model.AbnormalPayment{}).Where("order_no = ?", apA.OrderNo).Count(&nA)
+	if nA != 1 {
+		t.Fatalf("订单 A 应登记异常台账 1 条: %d", nA)
+	}
+	// 订单 B：模拟渠道重启后复用同一交易号 T900，必须同样入台账（旧全局唯一索引会 5000）
+	pet2 := mkPet(t, b, u.ID, "雪球")
+	apB := book(t, b, u, slot.ID, pet2.ID)
+	_, _ = b.CancelUnpaid(context.Background(), u, apB.ID)
+	if _, err := payNotify(b, "AX2", apB.OrderNo, "T900", 9900, "success"); err != nil {
+		t.Fatalf("交易号复用的另一订单迟到支付应受理: %v", err)
+	}
+	var nB int64
+	b.DB.Model(&model.AbnormalPayment{}).Where("order_no = ?", apB.OrderNo).Count(&nB)
+	if nB != 1 {
+		t.Fatalf("订单 B 应独立登记异常台账 1 条: %d", nB)
+	}
+	// 订单 B 同交易号再收到 → 幂等，台账仍 1 条
+	_, _ = payNotify(b, "AX3", apB.OrderNo, "T900", 9900, "success")
+	var nB2 int64
+	b.DB.Model(&model.AbnormalPayment{}).Where("order_no = ?", apB.OrderNo).Count(&nB2)
+	if nB2 != 1 {
+		t.Fatalf("同单同交易号幂等: %d", nB2)
+	}
+}
+
 // ---------- 审核与履约补充 ----------
 
 func TestReviewCancelStateInvalid(t *testing.T) {
