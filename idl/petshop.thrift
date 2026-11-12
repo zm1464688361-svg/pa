@@ -300,6 +300,9 @@ struct DailyReportResp {
     5: i64 refundPendingFen, // 退款待跟进
     6: list<SlotRow> slotRows,
     7: list<RecordRow> records,
+    8: i64 completedFen,     // 已完成服务收入（未到店不计入）
+    9: i32 noShowCount,      // 未到店单数（单独统计）
+    10: i64 noShowFen,       // 未到店金额（已收款未退款）
 }
 
 // ---------- 教学时钟 ----------

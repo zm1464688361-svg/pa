@@ -234,6 +234,9 @@ func (s *AppointmentServiceImpl) DailyReport(ctx context.Context, req *petshop.D
 	if e == nil {
 		resp.ReceivedFen, resp.RefundedFen, resp.NetFen = rep.ReceivedFen, rep.RefundedFen, rep.NetFen
 		resp.RefundPendingFen = rep.RefundFollowFen
+		resp.CompletedFen = rep.CompletedFen
+		resp.NoShowCount = int32(rep.NoShowCount)
+		resp.NoShowFen = rep.NoShowFen
 		for i := range rep.SlotRows {
 			r := &rep.SlotRows[i]
 			resp.SlotRows = append(resp.SlotRows, &petshop.SlotRow{

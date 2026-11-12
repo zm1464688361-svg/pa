@@ -309,8 +309,8 @@ func hSupport(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	resp, err := svc.ListCancelRequests(ctx, &petshop.ListCancelRequestsReq{Actor: actor(u)})
-	if err != nil {
-		render(c, "error.html", map[string]interface{}{"Error": err.Error()})
+	if e := firstErr(err, resp); e != nil {
+		render(c, "error.html", map[string]interface{}{"Error": e.Error()})
 		return
 	}
 	render(c, "support.html", map[string]interface{}{
@@ -338,8 +338,8 @@ func hSupportRefunds(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	resp, err := svc.ListRefunds(ctx, &petshop.ListRefundsReq{Actor: actor(u)})
-	if err != nil {
-		render(c, "error.html", map[string]interface{}{"Error": err.Error()})
+	if e := firstErr(err, resp); e != nil {
+		render(c, "error.html", map[string]interface{}{"Error": e.Error()})
 		return
 	}
 	render(c, "refunds.html", map[string]interface{}{
@@ -363,8 +363,8 @@ func hSupportAbnormal(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	resp, err := svc.ListAbnormal(ctx, &petshop.ListAbnormalReq{Actor: actor(u)})
-	if err != nil {
-		render(c, "error.html", map[string]interface{}{"Error": err.Error()})
+	if e := firstErr(err, resp); e != nil {
+		render(c, "error.html", map[string]interface{}{"Error": e.Error()})
 		return
 	}
 	render(c, "abnormal.html", map[string]interface{}{
@@ -394,8 +394,8 @@ func hOwner(ctx context.Context, c *app.RequestContext) {
 		date = time.Now().Format("2006-01-02")
 	}
 	rep, err := svc.DailyReport(ctx, &petshop.DailyReportReq{Actor: actor(u), Date: date})
-	if err != nil {
-		render(c, "error.html", map[string]interface{}{"Error": err.Error()})
+	if e := firstErr(err, rep); e != nil {
+		render(c, "error.html", map[string]interface{}{"Error": e.Error()})
 		return
 	}
 	bookings, _ := svc.GetBookings(ctx, &petshop.GetBookingsReq{Actor: actor(u)})
@@ -468,6 +468,20 @@ func msgOf(err error, def string) string {
 		return err.Error()
 	}
 	return def
+}
+
+// firstErr 合并 RPC 传输错误与业务错误（Base.Code != 0），供只读页面统一拦截。
+func firstErr(err error, resp interface{ GetBase() *petshop.BaseResp }) error {
+	if err != nil {
+		return err
+	}
+	if resp == nil {
+		return nil
+	}
+	if b := resp.GetBase(); b != nil && b.Code != 0 {
+		return fmt.Errorf("[%d] %s", b.Code, b.Msg)
+	}
+	return nil
 }
 
 func urlEscape(s string) string {

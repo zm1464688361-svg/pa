@@ -2950,6 +2950,9 @@ type DailyReportResp struct {
 	RefundPendingFen int64        `thrift:"refundPendingFen,5" frugal:"5,default,i64" json:"refundPendingFen"`
 	SlotRows         []*SlotRow   `thrift:"slotRows,6" frugal:"6,default,list<SlotRow>" json:"slotRows"`
 	Records          []*RecordRow `thrift:"records,7" frugal:"7,default,list<RecordRow>" json:"records"`
+	CompletedFen     int64        `thrift:"completedFen,8" frugal:"8,default,i64" json:"completedFen"`
+	NoShowCount      int32        `thrift:"noShowCount,9" frugal:"9,default,i32" json:"noShowCount"`
+	NoShowFen        int64        `thrift:"noShowFen,10" frugal:"10,default,i64" json:"noShowFen"`
 }
 
 func NewDailyReportResp() *DailyReportResp {
@@ -2991,6 +2994,18 @@ func (p *DailyReportResp) GetSlotRows() (v []*SlotRow) {
 func (p *DailyReportResp) GetRecords() (v []*RecordRow) {
 	return p.Records
 }
+
+func (p *DailyReportResp) GetCompletedFen() (v int64) {
+	return p.CompletedFen
+}
+
+func (p *DailyReportResp) GetNoShowCount() (v int32) {
+	return p.NoShowCount
+}
+
+func (p *DailyReportResp) GetNoShowFen() (v int64) {
+	return p.NoShowFen
+}
 func (p *DailyReportResp) SetBase(val *BaseResp) {
 	p.Base = val
 }
@@ -3012,6 +3027,15 @@ func (p *DailyReportResp) SetSlotRows(val []*SlotRow) {
 func (p *DailyReportResp) SetRecords(val []*RecordRow) {
 	p.Records = val
 }
+func (p *DailyReportResp) SetCompletedFen(val int64) {
+	p.CompletedFen = val
+}
+func (p *DailyReportResp) SetNoShowCount(val int32) {
+	p.NoShowCount = val
+}
+func (p *DailyReportResp) SetNoShowFen(val int64) {
+	p.NoShowFen = val
+}
 
 func (p *DailyReportResp) IsSetBase() bool {
 	return p.Base != nil
@@ -3025,13 +3049,16 @@ func (p *DailyReportResp) String() string {
 }
 
 var fieldIDToName_DailyReportResp = map[int16]string{
-	1: "base",
-	2: "receivedFen",
-	3: "refundedFen",
-	4: "netFen",
-	5: "refundPendingFen",
-	6: "slotRows",
-	7: "records",
+	1:  "base",
+	2:  "receivedFen",
+	3:  "refundedFen",
+	4:  "netFen",
+	5:  "refundPendingFen",
+	6:  "slotRows",
+	7:  "records",
+	8:  "completedFen",
+	9:  "noShowCount",
+	10: "noShowFen",
 }
 
 type GetClockResp struct {

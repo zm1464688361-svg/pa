@@ -36,8 +36,25 @@
 | dc91b34 | opt | v0.1.0 | 新增 GitHub Actions 流水线与 Dockerfile、compose 部署编排 |
 | （CI 产物提交） | opt | v0.1.0 | CI 上传覆盖率原件供审计取用 |
 
+## 分支、PR 与合并记录
+
+| 项 | 值 |
+|---|---|
+| 开发分支 | `zhou` |
+| 主分支 | `main`（仓库默认分支） |
+| PR | #1 `https://github.com/zm1464688361-svg/pa/pull/1`（zhou → main，13 个提交） |
+| 合并提交 | `ae5075232ec682300d9ebaa42a74dcb6dc777464`（merge 方式，保留开发分支原始提交） |
+| CI | `check`（gofmt/vet/race/覆盖率≥85%）与 `docker`（镜像构建）在合并前于 `6492121` 上全部通过 |
+
+CI 失败修复过程（保留真实循环记录）：
+
+1. `123b195` 首轮 CI：`gofmt` 步骤失败（本地未跑 `gofmt -l .`）→ 修复提交 `ea0da2c`。
+2. `ea0da2c` 第二轮：`coverage` 步骤失败，日志 `open .../coverage/cover.out: no such file or directory`（CI 环境无 `coverage/` 目录）→ 修复提交 `cd81b80`（Makefile 与 CI 均加建目录）。
+3. `cd81b80` 第三轮：全部通过。
+
 ## 待办（交付完整性）
 
 - [ ] meegle 插件凭证到位后补核验 #001，更新本表
-- [ ] GitHub 网络恢复后推送 `zhou` 分支并创建 PR 合并 `main`
+- [x] 推送 `zhou`、创建 PR #1 并合并 `main`
 - [ ] 讲解效果视频录制与群提交（学生本人完成，登记时间点）
+- [ ] 部署验证（本机 Docker Desktop 未启动；CI 已完成镜像构建验证，实际部署待验收环境执行）
