@@ -1,0 +1,15 @@
+* text=auto
+
+# 源码与文档统一按 LF 存储和检出，避免 Windows 工作区 CRLF 导致 gofmt 误报
+*.go text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.jsonl text eol=lf
+*.thrift text eol=lf
+
+# 二进制
+*.png binary
+*.jpg binary
+*.exe binary
