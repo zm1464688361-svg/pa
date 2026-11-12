@@ -117,6 +117,37 @@ func TestDuplicateTradeNoAbnormalIdempotent(t *testing.T) {
 	}
 }
 
+// 渠道重启后通知号复用：不同订单使用相同 notify_id 不得被判为重复通知（C-1 回归）
+func TestNotifyIDReuseAcrossOrders(t *testing.T) {
+	b := newBiz(t)
+	u := mkUser(t, b, "user1", "pet_owner", 0)
+	pet := mkPet(t, b, u.ID, "豆包")
+	start := b.Clock.Now().Add(26 * time.Hour)
+	slot := mkSlot(t, b, start, start.Add(time.Hour), 3)
+	ap1 := book(t, b, u, slot.ID, pet.ID)
+	if msg, err := payNotify(b, "N1-1", ap1.OrderNo, "TR1", 9900, "success"); err != nil {
+		t.Fatalf("首单支付: %v", err)
+	} else if msg == "" {
+		t.Fatal("首单支付应成功")
+	}
+	// 模拟渠道重启：新订单复用同一通知号 N1-1，必须按新通知正常受理
+	pet2 := mkPet(t, b, u.ID, "雪球")
+	ap2 := book(t, b, u, slot.ID, pet2.ID)
+	msg, err := payNotify(b, "N1-1", ap2.OrderNo, "TR2", 9900, "success")
+	if err != nil {
+		t.Fatalf("通知号复用不应判重: %v (msg=%q)", err, msg)
+	}
+	var ap2b model.Appointment
+	b.DB.First(&ap2b, ap2.ID)
+	if ap2b.Status != model.StatusConfirmed {
+		t.Fatalf("复用通知号的新订单应被确认: %s", ap2b.Status)
+	}
+	// 同一订单同一通知号再收到 → 仍幂等
+	if _, err := payNotify(b, "N1-1", ap2.OrderNo, "TR2", 9900, "success"); err != nil {
+		t.Fatalf("同单同通知号幂等: %v", err)
+	}
+}
+
 // ---------- 审核与履约补充 ----------
 
 func TestReviewCancelStateInvalid(t *testing.T) {

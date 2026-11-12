@@ -21,9 +21,11 @@ func (b *Biz) PayNotify(ctx context.Context, notifyID, orderNo, tradeNo string, 
 	}
 	msg := ""
 	err := b.DB.Transaction(func(tx *gorm.DB) error {
-		// 2) 幂等键：notify_id 唯一，重复通知返回首次结果
+		// 2) 幂等键：同一订单内 notify_id 唯一，重复通知返回首次结果。
+		// 注意不能只用全局 notify_id 判重：模拟渠道进程重启后通知号会复用（如 N1-1），
+		// 若按全局判重会把新订单的支付静默丢弃，表现为渠道重启后全部收款失效。
 		var existed model.PaymentRecord
-		if err := tx.Where("notify_id = ?", notifyID).First(&existed).Error; err == nil {
+		if err := tx.Where("order_no = ? AND notify_id = ?", orderNo, notifyID).First(&existed).Error; err == nil {
 			msg = "重复通知，已按首次结果处理：" + existed.Kind
 			return nil
 		}
