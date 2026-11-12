@@ -4,6 +4,7 @@ package repo
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -52,18 +53,16 @@ func migrateSchema(db *gorm.DB) error {
 		return fmt.Errorf("获取迁移锁超时: %s", lockName)
 	}
 	defer db.Exec("SELECT RELEASE_LOCK(?)", lockName)
-	if err := db.AutoMigrate(
-		&model.User{}, &model.Shop{}, &model.ServiceItem{}, &model.Pet{},
-		&model.TimeSlot{}, &model.Appointment{}, &model.PaymentRecord{},
-		&model.Refund{}, &model.CancelRequest{}, &model.AbnormalPayment{},
-		&model.AuditLog{}, &model.ClockOffset{},
-	); err != nil {
-		return err
-	}
-	if err := dropLegacyNotifyIndex(db); err != nil {
-		return err
-	}
-	return dropLegacyAbnormalTradeIndex(db)
+	return errors.Join(
+		db.AutoMigrate(
+			&model.User{}, &model.Shop{}, &model.ServiceItem{}, &model.Pet{},
+			&model.TimeSlot{}, &model.Appointment{}, &model.PaymentRecord{},
+			&model.Refund{}, &model.CancelRequest{}, &model.AbnormalPayment{},
+			&model.AuditLog{}, &model.ClockOffset{},
+		),
+		dropLegacyNotifyIndex(db),
+		dropLegacyAbnormalTradeIndex(db),
+	)
 }
 
 // dropLegacyNotifyIndex 兼容旧库：幂等键已改为 (order_no, notify_id) 复合唯一，
