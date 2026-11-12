@@ -3,6 +3,8 @@ package repo
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"time"
 	_ "time/tzdata" // Windows 下内嵌时区数据，保证 loc=Local 可用
@@ -30,16 +32,32 @@ func Open(dsn string, migrate bool) (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	if migrate {
-		if err := db.AutoMigrate(
-			&model.User{}, &model.Shop{}, &model.ServiceItem{}, &model.Pet{},
-			&model.TimeSlot{}, &model.Appointment{}, &model.PaymentRecord{},
-			&model.Refund{}, &model.CancelRequest{}, &model.AbnormalPayment{},
-			&model.AuditLog{}, &model.ClockOffset{},
-		); err != nil {
+		if err := migrateSchema(db); err != nil {
 			return nil, err
 		}
 	}
 	return db, nil
+}
+
+// migrateSchema 执行 AutoMigrate，并用 MySQL 命名锁串行化。
+// 多包并行测试（go test ./internal/... 会用多个进程同时连接同一测试库）时，
+// 并发 AutoMigrate 可能因表已存在（1050）互相冲突，命名锁保证同一时刻只有一个迁移者。
+func migrateSchema(db *gorm.DB) error {
+	const lockName = "petshop_schema_migrate"
+	var got sql.NullInt64
+	if err := db.Raw("SELECT GET_LOCK(?, 30)", lockName).Scan(&got).Error; err != nil {
+		return err
+	}
+	if !got.Valid || got.Int64 != 1 {
+		return fmt.Errorf("获取迁移锁超时: %s", lockName)
+	}
+	defer db.Exec("SELECT RELEASE_LOCK(?)", lockName)
+	return db.AutoMigrate(
+		&model.User{}, &model.Shop{}, &model.ServiceItem{}, &model.Pet{},
+		&model.TimeSlot{}, &model.Appointment{}, &model.PaymentRecord{},
+		&model.Refund{}, &model.CancelRequest{}, &model.AbnormalPayment{},
+		&model.AuditLog{}, &model.ClockOffset{},
+	)
 }
 
 // WriteAudit 写审计日志，失败仅记日志不影响主流程。
