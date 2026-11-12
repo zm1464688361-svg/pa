@@ -64,8 +64,9 @@ CI 失败修复过程（保留真实循环记录）：
 - [x] 覆盖率逐包达标（biz 87.2%、repo 88.9%，补 `coverage_gap_test.go`/`repo_gap_test.go`）
 - [x] 明文口令从 `scripts/e2e.ps1` 移除（改读 `MYSQL_PWD`/`config.local.yaml`）；**口令轮换待学生执行**
 - [x] CI 增加 `deploy` job + `scripts/smoke.sh`（compose 部署、健康检查、业务冒烟、制品上传）
-- [ ] `deploy` job 首次在 `main` 真实运行，回填运行链接与冒烟结果（见 `docs/deploy.md` 第 6 节）
+- [x] `deploy` job 首次在 `main` 真实运行：PR #6 合并提交 `086f961` 上 check/docker/**deploy 全绿**（compose 部署 + 健康检查 + smoke.sh 业务冒烟 + deploy-record 制品），运行链接 `https://github.com/zm1464688361-svg/pa/actions/runs/43203449605`
 - [ ] 教学验收环境地址确认（当前部署到 runner 本地，无公网验收地址）
+- [x] 覆盖率逐包门禁（covergate）随 CI 强制执行：合并提交 `086f961` 逐包 biz 87.2% / repo 85.7% / paysim 85.0%，整体 87.6%（CI 制品 coverage-profile 可回溯）
 - [x] 自编 Skill 两个 + `docs/skill-usage.md` 调用记录
 - [ ] `main` 分支保护：GitHub API 返回 403 `Upgrade to GitHub Pro or make this repository public`（私有仓库 + 免费套餐不支持），需教师确认仓库权限或转公开后再配置
 - [ ] 会话导出与 `docs/sessions/` 索引（导出方式见 `docs/prompt-log.md` 第 3 节）
@@ -82,7 +83,7 @@ CI 失败修复过程（保留真实循环记录）：
 | 缺陷-6 | 复检：逐包覆盖率核对 | 整体 85.5% 达标但 `biz 84.9%`、`repo 77.8%`，未满足"各核心包分别 ≥85%" | 本轮工作区（`coverage_gap_test.go`、`repo_gap_test.go`） | 待提交/合并 |
 | 缺陷-7 | 复检：敏感信息扫描 | `scripts/e2e.ps1:14` 内置 MySQL root 明文口令并已合入 main | 本轮工作区（改读 `MYSQL_PWD`/`config.local.yaml`） | 待提交/合并；口令轮换待执行 |
 | 缺陷-8 | 复检：流水线核对 | `ci.yml` 只有 check/docker，无部署、健康检查与业务冒烟，无法证明"自动部署上线" | 本轮工作区（新增 `deploy` job + `scripts/smoke.sh`） | 待提交/合并 + 首次运行 |
-| 缺陷-9 | 审计独立复跑端到端（paysim 重启场景） | 支付通知幂等键仅用全局 `notify_id`：模拟渠道进程重启后通知号（如 N1-1）复用，新订单支付回调被静默判"重复通知"（返回 code 0），预约永久停留待支付——渠道重启后全部收款失效 | `76555e6`（幂等键改为 订单号+通知号 复合唯一，迁移兼容清理旧全局索引，补跨订单复用回归测试） | 待合并复验 |
+| 缺陷-9 | 审计独立复跑端到端（paysim 重启场景） | 支付通知幂等键仅用全局 `notify_id`：模拟渠道进程重启后通知号（如 N1-1）复用，新订单支付回调被静默判"重复通知"（返回 code 0），预约永久停留待支付——渠道重启后全部收款失效 | `76555e6`（幂等键改为 订单号+通知号 复合唯一，迁移兼容清理旧全局索引，补跨订单复用回归测试） | 已合并 `086f961`；paysim 全新启动（计数器归 1）复跑 e2e **16/16 通过**，修复得证 |
 
 > 说明：按 `commit-convention.md`，`fix` 必须关联真实 Bug 编号；上述缺陷尚未在飞书项目登记 Bug 单（本机无 meegle 凭证），故修复提交使用 `opt` 类型并在 PR 描述中写明缺陷详情，取得凭证后补登记 Bug 并回填编号。
 
