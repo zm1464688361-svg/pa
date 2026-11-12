@@ -12,7 +12,7 @@ if (-not $env:MYSQL_PWD) {
     $cfg = Join-Path (Split-Path -Parent $PSScriptRoot) "config.local.yaml"
     if (Test-Path $cfg) {
         $line = (Select-String -Path $cfg -Pattern "^\s*db_dsn\s*:" | Select-Object -First 1).Line
-        if ($line -match "^\s*db_dsn\s*:\s*([^:@\s]+):([^@]*)@") {
+        if ($line -match "^\s*db_dsn\s*:\s*[`"']?([^:@`"'\s]+):([^@`"']*)@") {
             $MYSQL_USER = $Matches[1]
             $env:MYSQL_PWD = $Matches[2]
         }
@@ -47,7 +47,7 @@ function NewSlot($hoursAhead, $cap) {
     $st = (Get-Date).AddHours($hoursAhead).ToString("yyyy-MM-dd HH:mm")
     $en = (Get-Date).AddHours($hoursAhead + 1).ToString("yyyy-MM-dd HH:mm")
     Post $owner "/owner/slots" @{ start_time = $st; end_time = $en; capacity = $cap } | Out-Null
-    return SQL "SELECT id FROM time_slots WHERE start_time=STR_TO_DATE('$st','%Y-%m-%d %H:%i') LIMIT 1;"
+    return SQL "SELECT id FROM time_slots WHERE start_time=STR_TO_DATE('$st','%Y-%m-%d %H:%i') ORDER BY id DESC LIMIT 1;"
 }
 
 # ---------- 场景 1：≥2h 自助取消 + 退款成功释放名额（幂等） ----------
