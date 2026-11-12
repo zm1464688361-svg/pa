@@ -184,6 +184,79 @@ try { $apiDenied = (Invoke-WebRequest -Uri "$GW/owner?date=$day" -WebSession $u1
 $deniedOK = ($apiDenied -match "无权|权限|仅店长|denied")
 Step "店长可看日清报表且主人无权" ($hasReport -and $deniedOK) "报表渲染=$hasReport 主人被拒=$deniedOK"
 
+# ---------- 场景 7：并发抢位 → 关单释放 → 新用户再约 ----------
+$slotF = NewSlot 32 1
+$j1 = Start-Job -ScriptBlock { param($gw, $slot, $pet)
+    Invoke-WebRequest -Uri "$gw/login" -Method Post -Body @{ username = 'user1' } -SessionVariable s -UseBasicParsing | Out-Null
+    try { (Invoke-WebRequest -Uri "$gw/bookings" -Method Post -Body @{ slot_id = $slot; pet_id = $pet } -WebSession $s -UseBasicParsing).StatusCode } catch { "ERR" }
+} -ArgumentList $GW, $slotF, $pet1
+$j2 = Start-Job -ScriptBlock { param($gw, $slot, $pet)
+    Invoke-WebRequest -Uri "$gw/login" -Method Post -Body @{ username = 'user2' } -SessionVariable s -UseBasicParsing | Out-Null
+    try { (Invoke-WebRequest -Uri "$gw/bookings" -Method Post -Body @{ slot_id = $slot; pet_id = $pet } -WebSession $s -UseBasicParsing).StatusCode } catch { "ERR" }
+} -ArgumentList $GW, $slotF, $pet2
+Wait-Job $j1, $j2 | Out-Null
+$rF1 = Receive-Job $j1; $rF2 = Receive-Job $j2
+Remove-Job $j1, $j2
+$cntF = SQL "SELECT COUNT(*) FROM appointments WHERE slot_id=$slotF;"
+$remF = SQL "SELECT remaining FROM time_slots WHERE id=$slotF;"
+Step "并发抢位仅一人成功" ($cntF -eq "1" -and $remF -eq "0") "预约数=$cntF 余量=$remF（并发结果 j1=$rF1 j2=$rF2）"
+
+$apF = SQL "SELECT id FROM appointments WHERE slot_id=$slotF LIMIT 1;"
+$winU = SQL "SELECT u.username FROM appointments a JOIN users u ON a.user_id=u.id WHERE a.id=$apF;"
+$sessF = if ($winU -eq 'user1') { $u1 } else { $u2 }
+Post $sessF "/bookings/$apF/cancel-unpaid" @{} | Out-Null
+Start-Sleep 1
+$remF2 = SQL "SELECT remaining FROM time_slots WHERE id=$slotF;"
+Step "待支付关单释放名额" ($remF2 -eq "1") "原得主=$winU 关单后余量=$remF2"
+
+$loseSess = if ($winU -eq 'user1') { $u2 } else { $u1 }
+$losePet = if ($winU -eq 'user1') { $pet2 } else { $pet1 }
+$loseU = if ($winU -eq 'user1') { 'user2' } else { 'user1' }
+Post $loseSess "/bookings" @{ slot_id = $slotF; pet_id = $losePet } | Out-Null
+Start-Sleep 1
+$apF2 = SQL "SELECT id FROM appointments WHERE slot_id=$slotF AND id<>$apF;"
+$remF3 = SQL "SELECT remaining FROM time_slots WHERE id=$slotF;"
+Step "名额恢复后新用户预约成功" ($apF2 -and $remF3 -eq "0") "再约用户=$loseU 新预约=$apF2 余量=$remF3"
+
+# ---------- 场景 8：退款失败 → 重试 3 次 → 终态失败 → 再重试被拒 ----------
+$slotG = NewSlot 33 3
+Post $u1 "/bookings" @{ slot_id = $slotG; pet_id = $pet1 } | Out-Null
+$apG = SQL "SELECT id FROM appointments WHERE slot_id=$slotG ORDER BY id DESC LIMIT 1;"
+$orderG = SQL "SELECT order_no FROM appointments WHERE id=$apG;"
+Post $u1 "/pay/$orderG" @{ result = "success" } | Out-Null
+Start-Sleep 1
+Post $u1 "/bookings/$apG/cancel" @{ reason = "行程取消" } | Out-Null
+$rfG = SQL "SELECT refund_no FROM refunds WHERE booking_id=$apG ORDER BY id DESC LIMIT 1;"
+$rfGID = SQL "SELECT id FROM refunds WHERE refund_no='$rfG';"
+Invoke-WebRequest -Uri "$PS/action/refund" -Method Post -Body @{ refund_no = $rfG; result = "fail" } -UseBasicParsing | Out-Null
+Start-Sleep 2
+$stG1 = SQL "SELECT status FROM refunds WHERE refund_no='$rfG';"
+$cntG1 = SQL "SELECT retry_count FROM refunds WHERE refund_no='$rfG';"
+Step "退款失败进入可重试状态" ($stG1 -eq "failed" -and $cntG1 -eq "1") "退款=$stG1 失败计数=$cntG1"
+
+Post $support "/support/refunds/$rfGID/retry" @{} | Out-Null
+Invoke-WebRequest -Uri "$PS/action/refund" -Method Post -Body @{ refund_no = $rfG; result = "fail" } -UseBasicParsing | Out-Null
+Start-Sleep 2
+$cntG2 = SQL "SELECT retry_count FROM refunds WHERE refund_no='$rfG';"
+Step "第 1 次重试后再失败" ($cntG2 -eq "2") "失败计数=$cntG2"
+
+Post $support "/support/refunds/$rfGID/retry" @{} | Out-Null
+Invoke-WebRequest -Uri "$PS/action/refund" -Method Post -Body @{ refund_no = $rfG; result = "fail" } -UseBasicParsing | Out-Null
+Start-Sleep 2
+$cntG3 = SQL "SELECT retry_count FROM refunds WHERE refund_no='$rfG';"
+$stG3 = SQL "SELECT status FROM refunds WHERE refund_no='$rfG';"
+Step "第 2 次重试后再失败" ($cntG3 -eq "3" -and $stG3 -eq "failed") "失败计数=$cntG3 状态=$stG3"
+
+Post $support "/support/refunds/$rfGID/retry" @{} | Out-Null
+Start-Sleep 1
+$stG4 = SQL "SELECT status FROM refunds WHERE refund_no='$rfG';"
+Step "重试耗尽标终态失败" ($stG4 -eq "final_failed") "终态=$stG4（转人工台账，预约不复活）"
+
+Post $support "/support/refunds/$rfGID/retry" @{} -ErrorAction SilentlyContinue | Out-Null
+Start-Sleep 1
+$stG5 = SQL "SELECT status FROM refunds WHERE refund_no='$rfG';"
+Step "终态后再重试被拒绝" ($stG5 -eq "final_failed") "状态保持=$stG5"
+
 # ---------- 输出记录 ----------
 $head = @"
 # 端到端验收记录（自动生成）
@@ -205,6 +278,8 @@ $tail = @"
 - 场景 4 验证「关单后支付进入异常台账」「异常退款不释放名额、不恢复预约」。
 - 场景 5 验证「未到店必须时段结束后由店长手动标记」「名额不返还」。
 - 场景 6 验证「店长可见日清报表、主人无权访问」。
+- 场景 7 验证「并发抢位仅一人成功」「关单释放名额」「恢复后新用户可再约」。
+- 场景 8 验证「退款失败可重试」「重试 3 次耗尽标终态失败」「终态后再重试被拒、预约不复活」。
 "@
 ($head + ($script:rows -join "`n") + $tail) | Out-File -FilePath "docs/verification.md" -Encoding utf8
 Write-Host "已写入 docs/verification.md"
