@@ -14,11 +14,11 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/kitex/client"
-	petshop "github.com/zm1464688361-svg/pa/kitex_gen/petshop/appointmentservice"
 	"github.com/zm1464688361-svg/pa/internal/config"
 	"github.com/zm1464688361-svg/pa/internal/model"
 	"github.com/zm1464688361-svg/pa/internal/repo"
 	"github.com/zm1464688361-svg/pa/internal/session"
+	petshop "github.com/zm1464688361-svg/pa/kitex_gen/petshop/appointmentservice"
 	"gorm.io/gorm"
 )
 

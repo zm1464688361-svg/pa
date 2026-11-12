@@ -9,10 +9,10 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol"
-	petshop "github.com/zm1464688361-svg/pa/kitex_gen/petshop"
 	"github.com/zm1464688361-svg/pa/internal/model"
 	"github.com/zm1464688361-svg/pa/internal/paysim"
 	"github.com/zm1464688361-svg/pa/internal/session"
+	petshop "github.com/zm1464688361-svg/pa/kitex_gen/petshop"
 )
 
 type actorT = petshop.Actor
@@ -411,7 +411,7 @@ func hCreateSlot(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	resp, _ := svc.CreateSlot(ctx, &petshop.CreateSlotReq{
-		Actor: actor(u),
+		Actor:     actor(u),
 		StartTime: string(c.PostForm("start_time")),
 		EndTime:   string(c.PostForm("end_time")),
 		Capacity:  int32(atoi64(string(c.PostForm("capacity")))),

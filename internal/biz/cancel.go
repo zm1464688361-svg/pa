@@ -93,12 +93,12 @@ func (b *Biz) SubmitCancel(ctx context.Context, actor *model.User, bookingID int
 
 // CancelRequestView 客服审核列表行。
 type CancelRequestView struct {
-	Request     *model.CancelRequest
-	OrderNo     string
-	UserPet     string
-	SlotRange   string
-	StatusText  string
-	AmountFen   int64
+	Request    *model.CancelRequest
+	OrderNo    string
+	UserPet    string
+	SlotRange  string
+	StatusText string
+	AmountFen  int64
 }
 
 // ListCancelRequests 客服查看取消申请（默认待审核）。

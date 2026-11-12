@@ -230,7 +230,11 @@ func TestCheckInVsCancelConcurrent(t *testing.T) {
 		var wg sync.WaitGroup
 		var checkInOK, cancelOK bool
 		wg.Add(2)
-		go func() { defer wg.Done(); _, err := b.CheckIn(context.Background(), front, ap.ID); checkInOK = err == nil }()
+		go func() {
+			defer wg.Done()
+			_, err := b.CheckIn(context.Background(), front, ap.ID)
+			checkInOK = err == nil
+		}()
 		go func() {
 			defer wg.Done()
 			_, _, err := b.SubmitCancel(context.Background(), u, ap.ID, "并发取消")

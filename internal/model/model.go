@@ -58,7 +58,7 @@ const (
 
 // 异常支付状态。
 const (
-	AbnormalPending  = "pending"
+	AbnormalPending   = "pending"
 	AbnormalRefunding = "refunding"
 	AbnormalRefunded  = "refunded"
 )
@@ -118,23 +118,23 @@ type TimeSlot struct {
 
 // Appointment 预约单（= 订单）。
 type Appointment struct {
-	ID           int64     `gorm:"primaryKey" json:"id"`
-	OrderNo      string    `gorm:"size:32;uniqueIndex" json:"orderNo"`
-	UserID       int64     `gorm:"index" json:"userId"`
-	PetID        int64     `gorm:"index" json:"petId"`
-	SlotID       int64     `gorm:"index" json:"slotId"`
-	ShopID       int64     `gorm:"index" json:"shopId"`
-	AmountFen    int64     `json:"amountFen"`
-	Status       string    `gorm:"size:24;index" json:"status"`
-	PayDeadline  time.Time `json:"payDeadline"`  // 待支付计时起点 + 5 分钟
-	SlotReleased bool      `json:"slotReleased"` // 取消退款成功后名额已原路释放（幂等标记）
+	ID           int64      `gorm:"primaryKey" json:"id"`
+	OrderNo      string     `gorm:"size:32;uniqueIndex" json:"orderNo"`
+	UserID       int64      `gorm:"index" json:"userId"`
+	PetID        int64      `gorm:"index" json:"petId"`
+	SlotID       int64      `gorm:"index" json:"slotId"`
+	ShopID       int64      `gorm:"index" json:"shopId"`
+	AmountFen    int64      `json:"amountFen"`
+	Status       string     `gorm:"size:24;index" json:"status"`
+	PayDeadline  time.Time  `json:"payDeadline"`  // 待支付计时起点 + 5 分钟
+	SlotReleased bool       `json:"slotReleased"` // 取消退款成功后名额已原路释放（幂等标记）
 	CheckedInAt  *time.Time `json:"checkedInAt"`
 	StartAt      *time.Time `json:"startAt"`
 	CompletedAt  *time.Time `json:"completedAt"`
-	NoShowReason string    `gorm:"size:128" json:"noShowReason"`
+	NoShowReason string     `gorm:"size:128" json:"noShowReason"`
 	NoShowAt     *time.Time `json:"noShowAt"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
 }
 
 // PaymentRecord 支付通知流水。NotifyID 唯一（渠道幂等键）。
@@ -168,14 +168,14 @@ type Refund struct {
 
 // CancelRequest 取消申请。
 type CancelRequest struct {
-	ID           int64     `gorm:"primaryKey" json:"id"`
-	BookingID    int64     `gorm:"index" json:"bookingId"`
-	UserID       int64     `json:"userId"`
-	Reason       string    `gorm:"size:255" json:"reason"`
-	Status       string    `gorm:"size:16;index" json:"status"`
-	ReviewReason string    `gorm:"size:255" json:"reviewReason"`
-	Urgent       bool      `json:"urgent"` // 距开始 <2h
-	CreatedAt    time.Time `json:"createdAt"`
+	ID           int64      `gorm:"primaryKey" json:"id"`
+	BookingID    int64      `gorm:"index" json:"bookingId"`
+	UserID       int64      `json:"userId"`
+	Reason       string     `gorm:"size:255" json:"reason"`
+	Status       string     `gorm:"size:16;index" json:"status"`
+	ReviewReason string     `gorm:"size:255" json:"reviewReason"`
+	Urgent       bool       `json:"urgent"` // 距开始 <2h
+	CreatedAt    time.Time  `json:"createdAt"`
 	ReviewedAt   *time.Time `json:"reviewedAt"`
 }
 
@@ -203,7 +203,7 @@ type AuditLog struct {
 
 // ClockOffset 教学时钟偏移（单行 id=1）。
 type ClockOffset struct {
-	ID        int64     `gorm:"primaryKey"`
+	ID        int64 `gorm:"primaryKey"`
 	OffsetSec int64
 	UpdatedAt time.Time
 }

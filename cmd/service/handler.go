@@ -57,7 +57,7 @@ func toSlot(s *model.TimeSlot) *petshop.TimeSlot {
 	}
 	return &petshop.TimeSlot{
 		Id: s.ID, StartTime: s.StartTime.Format("2006-01-02 15:04"),
-		EndTime: s.EndTime.Format("2006-01-02 15:04"),
+		EndTime:  s.EndTime.Format("2006-01-02 15:04"),
 		Capacity: s.Capacity, Remaining: s.Remaining, Status: s.Status,
 	}
 }
@@ -255,8 +255,8 @@ func (s *AppointmentServiceImpl) DailyReport(ctx context.Context, req *petshop.D
 
 func (s *AppointmentServiceImpl) GetClock(ctx context.Context) (resp *petshop.GetClockResp, err error) {
 	return &petshop.GetClockResp{
-		Base: &petshop.BaseResp{Code: 0, Msg: "ok"},
-		Now:  s.B.Clock.Now().Format("2006-01-02 15:04:05"),
+		Base:      &petshop.BaseResp{Code: 0, Msg: "ok"},
+		Now:       s.B.Clock.Now().Format("2006-01-02 15:04:05"),
 		OffsetSec: s.B.Clock.Offset(),
 	}, nil
 }

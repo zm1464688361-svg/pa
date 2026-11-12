@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zm1464688361-svg/pa/internal/config"
 	"github.com/zm1464688361-svg/pa/internal/clock"
+	"github.com/zm1464688361-svg/pa/internal/config"
 	"github.com/zm1464688361-svg/pa/internal/errs"
 	"github.com/zm1464688361-svg/pa/internal/model"
 	"github.com/zm1464688361-svg/pa/internal/repo"
@@ -149,7 +149,7 @@ func TestCreateBookingSuccessAndHold(t *testing.T) {
 		t.Fatalf("金额应为 9900 分: %d", ap.AmountFen)
 	}
 	// 计时起点 = 订单创建时间，占用 5 分钟
-	if !ap.PayDeadline.After(b.Clock.Now().Add(4*time.Minute)) {
+	if !ap.PayDeadline.After(b.Clock.Now().Add(4 * time.Minute)) {
 		t.Fatalf("PayDeadline 应为创建时间 +5 分钟: %v", ap.PayDeadline)
 	}
 	var s model.TimeSlot

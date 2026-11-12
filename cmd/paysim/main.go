@@ -31,7 +31,7 @@ type payment struct {
 
 var (
 	mu        sync.Mutex
-	payments  = map[int64]*payment{}
+	payments        = map[int64]*payment{}
 	nextID    int64 = 1
 	nextTrade int64 = 100000
 )

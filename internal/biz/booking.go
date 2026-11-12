@@ -45,9 +45,9 @@ func (b *Biz) CreateSlot(ctx context.Context, actorID int64, role string, startS
 
 // SlotView 时段列表项（含可预约性判断）。
 type SlotView struct {
-	Slot       *model.TimeSlot
-	Bookable   bool
-	Reason     string // 不可预约原因
+	Slot     *model.TimeSlot
+	Bookable bool
+	Reason   string // 不可预约原因
 }
 
 // ListSlots 查询时段（店长/主人/前台均可，权限矩阵允许）。列表前先惰性关单。
