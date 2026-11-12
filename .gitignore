@@ -4,3 +4,4 @@ config.local.yaml
 coverage/
 bin/
 *.exe~
+outputs/
