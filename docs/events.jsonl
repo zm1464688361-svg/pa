@@ -1,0 +1,33 @@
+{"ts":"2026-11-12T10:52:30+08:00","kind":"git_commit","ref":"e944712","source":"git log","summary":"chore: 初始化仓库","note":"提交类型不在 commit-convention 允许列表内（历史问题，已记录）"}
+{"ts":"2026-11-12T11:57:56+08:00","kind":"git_commit","ref":"01f30bc","source":"git log","summary":"[docs] 题目02需求分析：角色、状态机、规则口径与假设清单"}
+{"ts":"2026-11-12T11:57:57+08:00","kind":"git_commit","ref":"2b68f5c","source":"git log","summary":"[docs] 原型设计说明：P1-P20页面与状态对照"}
+{"ts":"2026-11-12T11:57:57+08:00","kind":"git_commit","ref":"a9536df","source":"git log","summary":"[docs] 任务规划与原型图素材入库"}
+{"ts":"2026-11-12T13:33:32+08:00","kind":"git_commit","ref":"5be0780","source":"git log","summary":"[docs] 补充已验证的安装构建测试命令与技术栈说明"}
+{"ts":"2026-11-12T13:59:12+08:00","kind":"git_commit","ref":"67f6b47","source":"git log","summary":"[opt] [v0.1.0] 统一覆盖率统计口径为全 internal 包并固化 make cover"}
+{"ts":"2026-11-12T14:00:57+08:00","kind":"git_commit","ref":"dc91b34","source":"git log","summary":"[opt] [v0.1.0] 新增 GitHub Actions 流水线（gofmt/vet/race/覆盖率门禁/镜像构建）与 Dockerfile、compose 部署编排"}
+{"ts":"2026-11-12T14:01:37+08:00","kind":"git_commit","ref":"6f130ad","source":"git log","summary":"[opt] [v0.1.0] CI 上传覆盖率原件供审计取用"}
+{"ts":"2026-11-12T14:13:21+08:00","kind":"git_commit","ref":"ee42f4b","source":"git log","summary":"[docs] 登记工作项对应关系与 meegle 核验记录（#001 凭证缺失待补验）"}
+{"ts":"2026-11-12T14:13:22+08:00","kind":"git_commit","ref":"99650c5","source":"git log","summary":"[feat] [v0.1.0] [#001] 实现预约支付核销取消退款全链路（时段发布/预扣名额/教学时钟/模拟渠道/四角色页面/日清报表）"}
+{"ts":"2026-11-12T14:13:22+08:00","kind":"git_commit","ref":"123b195","source":"git log","summary":"[test] [v0.1.0] 补充核心业务单元测试与并发竞态测试（提交信息称覆盖率 85.6%）"}
+{"ts":"2026-11-12T14:13:22+08:00","kind":"ci_run","ref":"run 编号未记录","source":"docs/workitems.md 修复记录（GitHub Actions 日志）","summary":"首轮 CI 的 gofmt 步骤失败","conclusion":"failure","note":"时间近似取首次推送时间，run 编号与精确时间为平台侧数据，未单独保存"}
+{"ts":"2026-11-12T14:30:03+08:00","kind":"git_commit","ref":"ea0da2c","source":"git log","summary":"[opt] [v0.1.0] gofmt 统一代码格式，修复 CI 格式门禁失败"}
+{"ts":"2026-11-12T14:36:09+08:00","kind":"git_commit","ref":"cd81b80","source":"git log","summary":"[opt] [v0.1.0] 修复 CI 覆盖率步骤缺少输出目录导致门禁误判"}
+{"ts":"2026-11-12T14:38:18+08:00","kind":"git_commit","ref":"6492121","source":"git log","summary":"[opt] [v0.1.0] 审计输出目录移出版本控制并加入忽略规则"}
+{"ts":"2026-11-12T14:41:48+08:00","kind":"git_commit","ref":"ae50752","source":"git log","summary":"[feat] [v0.1.0] [#001] 题目02全链路实现（提交信息编码异常，原文不可读）"}
+{"ts":"2026-11-12T14:42:48+08:00","kind":"git_commit","ref":"afddc83","source":"git log","summary":"[docs] 登记 PR #1、合并提交与 CI 修复过程"}
+{"ts":"2026-11-12T14:53:09+08:00","kind":"git_commit","ref":"ca5ec6c","source":"git log","summary":"[opt] [v0.1.0] 修复店长报表页模板字段错位与越权静默放行（IDL 补齐 completedFen/noShowCount/noShowFen，只读页统一拦截 Base.Code）"}
+{"ts":"2026-11-12T14:53:09+08:00","kind":"git_commit","ref":"eab0763","source":"git log","summary":"[test] [v0.1.0] 新增四角色端到端验收脚本与验收记录（16 场景全通过）"}
+{"ts":"2026-11-12T14:57:10+08:00","kind":"git_commit","ref":"e6f7112","source":"git log","summary":"[opt] [v0.1.0] 报表字段与越权拦截修复（提交信息编码异常）"}
+{"ts":"2026-11-12T14:57:22+08:00","kind":"git_commit","ref":"fbdd3ac","source":"git log","summary":"[docs] 登记 PR #2、缺陷记录与端到端验收结果"}
+{"ts":"2026-11-12T14:36:09+08:00","kind":"ci_run","ref":"run 编号未记录","source":"docs/workitems.md 修复记录（GitHub Actions 日志）","summary":"第二轮 CI 的 coverage 步骤失败：open coverage/cover.out: no such file or directory","conclusion":"failure","note":"时间近似取修复提交时间，run 编号与精确时间未单独保存"}
+{"ts":"2026-11-12T15:00:59+08:00","kind":"git_commit","ref":"a913390","source":"git log","summary":"[docs] 合并 PR #3 后的文档登记（提交信息编码异常）"}
+{"ts":"2026-11-12T15:06:02+08:00","kind":"git_commit","ref":"c2462f0","source":"git log","summary":"[opt] [v0.1.0] 修复页脚教学时间取本机时间与测试库并发迁移冲突，补齐 Makefile run-all/串行测试目标"}
+{"ts":"2026-11-12T15:06:02+08:00","kind":"git_commit","ref":"b6c8459","source":"git log","summary":"[test] [v0.1.0] 补充仓储层并发迁移与时钟单行幂等测试"}
+{"ts":"2026-11-12T15:06:02+08:00","kind":"git_commit","ref":"2b59e59","source":"git log","summary":"[docs] 按实测结果更新 AGENTS.md 工程骨架、目录结构、教学时钟与验证记录"}
+{"ts":"2026-11-12T15:10:10+08:00","kind":"git_commit","ref":"7713bc8","source":"git log","summary":"[opt] [v0.1.0] 合并工程骨架修复：教学时钟页脚、并发迁移锁、Makefile 校准"}
+{"ts":"2026-11-12T15:10:56+08:00","kind":"git_commit","ref":"bdb8d2d","source":"git log","summary":"[docs] 登记 PR #1~#4 合并记录、骨架验证结果与三处骨架缺陷"}
+{"ts":"2026-11-12T15:15:24+08:00","kind":"git_commit","ref":"fa44b06","source":"git log","summary":"Merge pull request #5 from zm1464688361-svg/zhou","note":"平台生成的合并提交未按第 9 节关联工作项编号"}
+{"ts":"2026-11-12T15:15:27+08:00","kind":"ci_run","ref":"run#22","source":"GitHub Actions API","summary":"main push 触发 ci，head_sha=fa44b06，gofmt/vet/build/race/覆盖率门禁/镜像构建全部通过","conclusion":"success"}
+{"ts":"2026-11-12T15:16:54+08:00","kind":"ci_artifact","ref":"coverage-profile","source":"GitHub Actions API","summary":"coverage-profile 36538B，sha256:07ea7ce2…40380，对应 fa44b06，未过期"}
+{"ts":"2026-11-12T15:40:00+08:00","kind":"quality_fix","ref":"工作区（未提交）","source":"本次修复会话","summary":"补 biz/repo 异常分支用例使逐包覆盖率≥85%；移除 e2e.ps1 明文口令；新增 deploy job 与 smoke.sh；新增两个自编 Skill 与使用记录"}
+{"ts":"2026-11-12T15:40:00+08:00","kind":"deployment","ref":"pending","source":"流水线配置","summary":"deploy job 已配置但尚未在 main 上真实运行，部署地址与冒烟结果待补","conclusion":"pending"}
